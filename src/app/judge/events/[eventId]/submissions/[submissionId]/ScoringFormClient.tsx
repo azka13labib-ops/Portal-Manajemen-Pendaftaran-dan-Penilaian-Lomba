@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Check, ExternalLink, FileDown, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Save, Check, ExternalLink, FileDown, AlertTriangle, Clock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { ConfirmModal } from '@/components/ui/Modal';
 import Link from 'next/link';
 
 interface ScoringFormClientProps {
@@ -33,6 +34,36 @@ export function ScoringFormClient({
   // Check if already finalized (status = SUBMITTED on any existing score)
   const isLocked = existingScores.some((s) => s.status === 'SUBMITTED') || event.status === 'FINALIZED';
 
+  // Wait time logic for judge
+  const [judgeWaitTimeLeft, setJudgeWaitTimeLeft] = useState<number>(0);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (!submission?.submitted_at) return;
+    
+    const submittedTime = new Date(submission.submitted_at).getTime();
+    const unlockTime = submittedTime + 10 * 60 * 1000; // 10 minutes wait
+    
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const remaining = Math.max(0, Math.floor((unlockTime - now) / 1000));
+      setJudgeWaitTimeLeft(remaining);
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [submission]);
+
+  const isWaitingForParticipant = judgeWaitTimeLeft > 0;
+  const isFormDisabled = isLocked || isWaitingForParticipant;
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   // State for raw scores and notes
   const [formState, setFormState] = useState<Record<string, { rawScore: number; notes: string }>>(() => {
     const initialState: Record<string, { rawScore: number; notes: string }> = {};
@@ -52,7 +83,7 @@ export function ScoringFormClient({
 
   // Update a single score
   const handleScoreChange = (criteriaId: string, val: number) => {
-    if (isLocked) return;
+    if (isFormDisabled) return;
     setFormState((prev) => ({
       ...prev,
       [criteriaId]: {
@@ -64,7 +95,7 @@ export function ScoringFormClient({
 
   // Update a single note
   const handleNoteChange = (criteriaId: string, val: string) => {
-    if (isLocked) return;
+    if (isFormDisabled) return;
     setFormState((prev) => ({
       ...prev,
       [criteriaId]: {
@@ -95,6 +126,14 @@ export function ScoringFormClient({
   const finalAggregateScore = calculations.reduce((sum, item) => sum + item.weighted, 0);
 
   // Save functionality
+  const handlePreSave = (status: 'DRAFT' | 'SUBMITTED') => {
+    if (status === 'SUBMITTED') {
+      setIsConfirmOpen(true);
+    } else {
+      handleSave('DRAFT');
+    }
+  };
+
   const handleSave = async (status: 'DRAFT' | 'SUBMITTED') => {
     setLoading(true);
     try {
@@ -206,7 +245,23 @@ export function ScoringFormClient({
             </div>
           </Card>
 
-          {isLocked && (
+          {isWaitingForParticipant && (
+            <Card className="p-4 border-amber-500/25 bg-amber-500/5 flex gap-3 text-amber-400 text-xs">
+              <Clock size={16} className="shrink-0" />
+              <div className="w-full">
+                <p className="font-bold">Menunggu Masa Revisi Peserta</p>
+                <p className="text-slate-400 mt-0.5">
+                  Karya ini baru saja dikumpulkan/diperbarui. Peserta memiliki waktu revisi 10 menit sebelum karya dikunci untuk dinilai.
+                </p>
+                <div className="mt-3 flex items-center justify-between bg-black/20 rounded-lg px-3 py-2 border border-amber-500/20">
+                  <span className="text-amber-500/80 font-semibold">Sisa Waktu Tunggu:</span>
+                  <span className="font-mono text-amber-300 font-bold text-sm tracking-wider">{formatTime(judgeWaitTimeLeft)}</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {isLocked && !isWaitingForParticipant && (
             <Card className="p-4 border-amber-500/25 bg-amber-500/5 flex gap-3 text-amber-400 text-xs">
               <AlertTriangle size={16} className="shrink-0" />
               <div>
@@ -260,7 +315,7 @@ export function ScoringFormClient({
                         max={c.max_score}
                         value={current.rawScore}
                         onChange={(e) => handleScoreChange(c.id, Number(e.target.value))}
-                        disabled={isLocked}
+                        disabled={isFormDisabled}
                         className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <div className="w-16 shrink-0">
@@ -270,7 +325,7 @@ export function ScoringFormClient({
                           max={c.max_score}
                           value={current.rawScore}
                           onChange={(e) => handleScoreChange(c.id, Number(e.target.value))}
-                          disabled={isLocked}
+                          disabled={isFormDisabled}
                           className="w-full text-center h-8 rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-slate-200 focus:outline-none focus:border-blue-500 disabled:opacity-50"
                         />
                       </div>
@@ -281,7 +336,7 @@ export function ScoringFormClient({
                       placeholder="Tambahkan catatan khusus untuk kriteria ini..."
                       value={current.notes}
                       onChange={(e) => handleNoteChange(c.id, e.target.value)}
-                      disabled={isLocked}
+                      disabled={isFormDisabled}
                       className="min-h-[50px] text-xs py-1.5 px-2.5 rounded-lg bg-slate-900/50 border-slate-800"
                     />
                   </div>
@@ -290,11 +345,11 @@ export function ScoringFormClient({
             </div>
 
             {/* Actions */}
-            {!isLocked && (
+            {!isLocked && !isWaitingForParticipant && (
               <div className="flex items-center gap-3 pt-4 border-t border-slate-800">
                 <Button
                   variant="secondary"
-                  onClick={() => handleSave('DRAFT')}
+                  onClick={() => handlePreSave('DRAFT')}
                   loading={loading}
                   leftIcon={<Save size={16} />}
                   className="flex-1"
@@ -303,7 +358,7 @@ export function ScoringFormClient({
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => handleSave('SUBMITTED')}
+                  onClick={() => handlePreSave('SUBMITTED')}
                   loading={loading}
                   leftIcon={<Check size={16} />}
                   className="flex-1"
@@ -315,6 +370,21 @@ export function ScoringFormClient({
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => {
+          setIsConfirmOpen(false);
+          handleSave('SUBMITTED');
+        }}
+        title="Kunci & Kirim Penilaian"
+        message="Apakah Anda yakin ingin mengunci dan mengirim penilaian ini? Setelah dikirim, Anda tidak dapat mengubah nilainya lagi dan skor akan langsung masuk ke Leaderboard."
+        confirmLabel="Ya, Kunci Penilaian"
+        cancelLabel="Batal"
+        loading={loading}
+      />
     </div>
   );
 }

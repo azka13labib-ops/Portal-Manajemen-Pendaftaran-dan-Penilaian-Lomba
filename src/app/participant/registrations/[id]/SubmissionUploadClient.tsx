@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Upload, Send, CheckCircle2,
-  ExternalLink, FileDown, Award
+  ExternalLink, FileDown, Award, Clock
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { ConfirmModal } from '@/components/ui/Modal';
 import Link from 'next/link';
 
 interface SubmissionUploadClientProps {
@@ -42,6 +43,39 @@ export function SubmissionUploadClient({
   const [externalLink, setExternalLink] = useState(initialSubmission ? initialSubmission.external_link || '' : '');
   const [description, setDescription] = useState(initialSubmission ? initialSubmission.description || '' : '');
   const [isEditing, setIsEditing] = useState(!initialSubmission);
+  
+  // Lock logic
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    if (!submission?.submitted_at) return;
+    
+    const submittedTime = new Date(submission.submitted_at).getTime();
+    const lockTime = submittedTime + 10 * 60 * 1000;
+    
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const remaining = Math.max(0, Math.floor((lockTime - now) / 1000));
+      setTimeLeft(remaining);
+      
+      if (remaining === 0 && isEditing && submission) {
+        setIsEditing(false);
+      }
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [submission, isEditing]);
+
+  const canEdit = !isSubmissionClosed && !isFinalized && (!submission || timeLeft > 0);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,8 +92,13 @@ export function SubmissionUploadClient({
     setSubFile(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsConfirmOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    setIsConfirmOpen(false);
     if (isSubmissionClosed) {
       toast({
         type: 'error',
@@ -112,7 +151,7 @@ export function SubmissionUploadClient({
       }
 
       // 2. Upsert submission
-      const payload = {
+      const payload: any = {
         registration_id: registration.id,
         event_id: event.id,
         file_url: fileUrl,
@@ -121,7 +160,6 @@ export function SubmissionUploadClient({
         external_link: externalLink.trim() || null,
         description: description.trim() || null,
         status: 'SUBMITTED',
-        submitted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
@@ -138,6 +176,7 @@ export function SubmissionUploadClient({
         setSubmission(data);
       } else {
         // If first submit
+        payload.submitted_at = new Date().toISOString();
         const { data, error } = await supabase
           .from('submissions')
           .insert(payload)
@@ -256,20 +295,36 @@ export function SubmissionUploadClient({
             </div>
 
             {/* Replace Button if deadline not passed */}
-            {!isSubmissionClosed && !isFinalized && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => setIsEditing(true)}
-              >
-                Ganti / Perbarui Karya
-              </Button>
+            {canEdit ? (
+              <div className="pt-2">
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <Clock className="text-amber-400" size={16} />
+                  <p className="text-xs text-amber-300 font-medium">
+                    Sisa Waktu Revisi: <span className="font-mono">{formatTime(timeLeft)}</span>
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Ganti / Perbarui Karya
+                </Button>
+              </div>
+            ) : (
+              !isSubmissionClosed && !isFinalized && (
+                <div className="mt-2 px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg">
+                  <p className="text-xs text-slate-400 text-center">
+                    Masa revisi karya (10 menit) telah berakhir. Karya telah dikunci untuk dinilai.
+                  </p>
+                </div>
+              )
             )}
           </Card>
         </motion.div>
       ) : (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handlePreSubmit}>
           <Card className="p-5 space-y-5">
             <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
               <Upload className="text-blue-400" size={18} />
@@ -353,6 +408,21 @@ export function SubmissionUploadClient({
           </Card>
         </form>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleSubmit}
+        title={submission ? "Perbarui Karya" : "Kumpulkan Karya"}
+        message={submission 
+          ? "Apakah Anda yakin ingin memperbarui karya ini? Pembaruan dapat dilakukan selama masa revisi (10 menit) belum berakhir."
+          : "Apakah Anda yakin ingin mengirimkan karya ini? Setelah dikirim, Anda memiliki waktu revisi selama 10 menit sebelum karya dikunci secara permanen untuk dinilai oleh juri."
+        }
+        confirmLabel="Ya, Kumpulkan"
+        cancelLabel="Batal"
+        loading={loading}
+      />
     </div>
   );
 }
