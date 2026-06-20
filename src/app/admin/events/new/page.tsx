@@ -82,6 +82,10 @@ export default function NewEventPage() {
     setLoading(true);
 
     try {
+      // Get current user for ownership
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sesi login tidak valid');
+
       // 1. Create event
       const { data: event, error: eventErr } = await supabase
         .from('events')
@@ -97,6 +101,7 @@ export default function NewEventPage() {
           registration_close_at: new Date(regClose).toISOString(),
           submission_close_at: new Date(subClose).toISOString(),
           announced_at: announced ? new Date(announced).toISOString() : null,
+          created_by: user.id,
           status: 'DRAFT',
         })
         .select()

@@ -15,6 +15,9 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
   const { id: eventId } = await params;
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
+
   // Parallel fetch event data
   const [
     { data: event, error: eventErr },
@@ -54,7 +57,8 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
       .eq('event_id', eventId),
   ]);
 
-  if (eventErr || !event) {
+  // Guard: event must exist AND belong to the current admin
+  if (eventErr || !event || event.created_by !== user.id) {
     notFound();
   }
 

@@ -30,10 +30,17 @@ export default function AdminEventsPage() {
   useEffect(() => {
     async function fetchEvents() {
       setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
       let query = supabase
         .from('events')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (user) {
+        query = query.eq('created_by', user.id);
+      }
 
       if (statusFilter !== 'ALL') {
         query = query.eq('status', statusFilter);
