@@ -24,7 +24,8 @@ export default async function JudgesAdminPage() {
   // 1. All users with JUDGE role (for potential assignment)
   // 2. Owned events (for assignment dropdown)
   // 3. Event-judge assignments scoped to owned events
-  const [judgesResult, eventsResult, assignmentsResult] = await Promise.all([
+  // 4. All assignments in the database (to detect unassigned judges)
+  const [judgesResult, eventsResult, assignmentsResult, allAssignmentsResult] = await Promise.all([
     supabase
       .from('user_roles')
       .select(`
@@ -56,6 +57,9 @@ export default async function JudgesAdminPage() {
           `)
           .in('event_id', ownEventIds)
       : Promise.resolve({ data: [] }),
+    supabase
+      .from('event_judges')
+      .select('judge_id'),
   ]);
 
   // Get unique judge IDs from owned event assignments
@@ -63,7 +67,12 @@ export default async function JudgesAdminPage() {
     (assignmentsResult.data || []).map((a: { judge_id: string }) => a.judge_id)
   );
 
-  // Format judges list - only show judges who are assigned to owned events
+  // Get all judge IDs who have at least one assignment in the system
+  const allAssignedJudgeIds = new Set(
+    (allAssignmentsResult.data || []).map((a: { judge_id: string }) => a.judge_id)
+  );
+
+  // Format judges list
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const allJudges = (judgesResult.data || []).map((item: any) => ({
     id: item.user_id,
@@ -72,8 +81,12 @@ export default async function JudgesAdminPage() {
     institution: item.users?.institution || '-',
   }));
 
-  // Filter to only judges relevant to this admin's events
-  const judges = allJudges.filter((j: { id: string }) => assignedJudgeIds.has(j.id));
+  // Filter to:
+  // - Judges assigned to this admin's events
+  // - OR Judges who are completely unassigned (so they can be assigned to events)
+  const judges = allJudges.filter((j: { id: string }) => 
+    assignedJudgeIds.has(j.id) || !allAssignedJudgeIds.has(j.id)
+  );
 
   const events = eventsResult.data || [];
   
