@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Trophy, Mail, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
@@ -21,7 +20,6 @@ interface FormData {
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClient();
 
   const [form, setForm] = useState<FormData>({
     fullName: '',
@@ -55,54 +53,38 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: {
-          full_name: form.fullName.trim(),
-          institution: form.institution.trim(),
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (error) {
-      setLoading(false);
-      toast({ type: 'error', title: 'Registrasi Gagal', message: error.message });
-      return;
-    }
-
-    // Insert to public users table (if not handled by trigger)
-    if (data.user) {
-      await supabase.from('users').upsert({
-        id: data.user.id,
-        full_name: form.fullName.trim(),
-        email: form.email,
-        institution: form.institution.trim() || null,
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          fullName: form.fullName,
+          institution: form.institution,
+        }),
       });
 
-      // Assign PARTICIPANT role
-      const { data: participantRole } = await supabase
-        .from('roles')
-        .select('id')
-        .eq('name', 'PARTICIPANT')
-        .single();
+      const result = await res.json();
 
-      if (participantRole) {
-        await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role_id: participantRole.id });
+      if (!res.ok) {
+        throw new Error(result.error || 'Terjadi kesalahan saat registrasi.');
       }
-    }
 
-    setLoading(false);
-    toast({
-      type: 'success',
-      title: 'Registrasi Berhasil!',
-      message: 'Silakan cek email Anda untuk verifikasi akun.',
-    });
-    router.push('/auth/login');
+      toast({
+        type: 'success',
+        title: 'Registrasi Berhasil!',
+        message: 'Akun Anda telah aktif dan dapat langsung digunakan untuk masuk.',
+      });
+      router.push('/auth/login');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : 'Terjadi kesalahan saat registrasi.';
+      toast({ type: 'error', title: 'Registrasi Gagal', message: errMsg });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
