@@ -7,15 +7,14 @@ export default async function JudgeLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/login');
 
-  const { data: userRoleData } = await supabase
+  const { data: userRolesData } = await supabase
     .from('user_roles')
     .select('roles(name)')
-    .eq('user_id', user.id)
-    .single();
+    .eq('user_id', user.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const roleName = (userRoleData as any)?.roles?.name;
-  if (roleName !== 'JUDGE' && roleName !== 'ADMIN') redirect('/participant');
+  const roleNames: string[] = (userRolesData ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+  if (!roleNames.includes('JUDGE') && !roleNames.includes('ADMIN')) redirect('/participant');
 
   const { data: profile } = await supabase
     .from('users')
