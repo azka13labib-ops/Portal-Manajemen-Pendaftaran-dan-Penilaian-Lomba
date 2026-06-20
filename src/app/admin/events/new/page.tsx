@@ -161,8 +161,15 @@ export default function NewEventPage() {
 
       toast({ type: 'success', title: 'Event berhasil dibuat!', message: 'Event disimpan sebagai Draft.' });
       router.push(`/admin/events/${event.id}`);
-    } catch {
-      toast({ type: 'error', title: 'Gagal membuat event', message: 'Terjadi kesalahan. Coba lagi.' });
+    } catch (err: unknown) {
+      console.error('Error creating event:', err);
+      let errMsg = 'Terjadi kesalahan. Coba lagi.';
+      if (err instanceof Error) {
+        errMsg = err.message;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errMsg = String((err as { message: unknown }).message);
+      }
+      toast({ type: 'error', title: 'Gagal membuat event', message: errMsg });
     } finally {
       setLoading(false);
     }
