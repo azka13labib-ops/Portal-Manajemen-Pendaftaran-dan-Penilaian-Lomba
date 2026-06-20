@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   FileCheck,
   CheckCircle2,
+  User,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -116,8 +117,8 @@ export function SubmissionsListClient({
               const event = item.events || {};
               const submission = item.submission;
               const isSubmissionClosed = new Date() > new Date(event.submission_close_at);
-              const isFinalized = event.status === 'FINALIZED';
-              const canSubmit = !isSubmissionClosed && !isFinalized;
+              const isJudgingOrFinalized = ['JUDGING', 'FINALIZED', 'ARCHIVED'].includes(event.status);
+              const canSubmit = !isSubmissionClosed && !isJudgingOrFinalized;
 
               return (
                 <motion.div key={item.id} variants={itemVariants}>
@@ -130,7 +131,7 @@ export function SubmissionsListClient({
                             {event.category || 'Lomba'}
                           </span>
                           <span className="text-[9px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
-                            {item.team_id ? `Kelompok (Tim: ${item.teams?.name})` : '👤 Individu'}
+                            {item.team_id ? `Kelompok (Tim: ${item.teams?.name})` : <><User size={9} className="inline mr-1" /> Individu</>}
                           </span>
                         </div>
                         <h3 className="font-bold text-slate-100 text-base mt-2" style={{ fontFamily: 'var(--font-display)' }}>

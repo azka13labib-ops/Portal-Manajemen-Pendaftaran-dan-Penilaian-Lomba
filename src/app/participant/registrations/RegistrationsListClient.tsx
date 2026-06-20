@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ClipboardList,
   Inbox,
+  User,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -141,7 +142,7 @@ export function RegistrationsListClient({ registrations }: RegistrationsListClie
                         </h3>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
                           <span>
-                            Mode: {reg.team_id ? `Kelompok (Tim: ${reg.teams?.name})` : '👤 Individu'}
+                            Mode: {reg.team_id ? `Kelompok (Tim: ${reg.teams?.name})` : <><User size={10} className="inline mr-1" /> Individu</>}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">

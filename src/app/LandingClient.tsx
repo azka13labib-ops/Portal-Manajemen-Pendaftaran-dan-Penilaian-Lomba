@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Trophy, Calendar, ArrowRight, Sparkles, Search, Filter, Zap } from 'lucide-react';
+import { Trophy, Calendar, ArrowRight, Sparkles, Search, Filter, Zap, Palette, Code, PenTool, Rocket, User, Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
@@ -17,10 +17,10 @@ interface LandingClientProps {
 
 const CATEGORIES = [
   { value: '', label: 'Semua Kategori' },
-  { value: 'desain', label: '🎨 Desain' },
-  { value: 'programming', label: '💻 Programming' },
-  { value: 'esai', label: '✍️ Esai' },
-  { value: 'inovasi', label: '🚀 Inovasi' },
+  { value: 'desain', label: 'Desain', icon: <Palette size={14} className="inline mr-1" /> },
+  { value: 'programming', label: 'Programming', icon: <Code size={14} className="inline mr-1" /> },
+  { value: 'esai', label: 'Esai', icon: <PenTool size={14} className="inline mr-1" /> },
+  { value: 'inovasi', label: 'Inovasi', icon: <Rocket size={14} className="inline mr-1" /> },
 ];
 
 export function LandingClient({
@@ -199,7 +199,7 @@ export function LandingClient({
             return (
               <Card key={event.id} className="overflow-hidden flex flex-col group hover:border-[rgba(93,138,205,0.3)] transition-all">
                 {/* Event banner visual representation (premium CSS styling) */}
-                <div className="w-full h-32 bg-gradient-to-br from-blue-900/40 to-teal-900/30 relative flex items-center justify-center overflow-hidden border-b border-slate-800">
+                <div className="w-full h-32 bg-linear-to-br from-blue-900/40 to-teal-900/30 relative flex items-center justify-center overflow-hidden border-b border-slate-800">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1),transparent_70%)]" />
                   <Trophy size={48} className="text-blue-500/20 group-hover:scale-110 transition-transform duration-300" />
                   
@@ -207,8 +207,8 @@ export function LandingClient({
                     {event.category || 'Lomba'}
                   </span>
 
-                  <span className="absolute top-3 right-3 text-[9px] font-bold text-blue-300 bg-blue-600/20 px-2 py-0.5 rounded border border-blue-500/20">
-                    {event.registration_mode === 'TEAM' ? '👥 Tim' : '👤 Individu'}
+                  <span className="absolute top-3 right-3 text-[9px] font-bold text-blue-300 bg-blue-600/20 px-2 py-0.5 rounded border border-blue-500/20 flex items-center">
+                    {event.registration_mode === 'TEAM' ? <><Users size={10} className="mr-1" /> Tim</> : <><User size={10} className="mr-1" /> Individu</>}
                   </span>
                 </div>
 

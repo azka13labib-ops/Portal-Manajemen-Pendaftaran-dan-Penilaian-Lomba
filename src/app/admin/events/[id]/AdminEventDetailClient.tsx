@@ -3,11 +3,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Trophy, Users, FileText, ClipboardList, CheckCircle2,
   XCircle, Award, RefreshCw, Plus, Trash2, ExternalLink,
-  Sparkles, Check, Send, AlertTriangle
+  Sparkles, Check, Send, AlertTriangle, Edit, User
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
@@ -37,6 +38,10 @@ interface JoinedRegistration {
   } | null;
   teams: {
     name: string;
+    team_members?: {
+      status: string;
+      users: { full_name: string; email: string } | null;
+    }[];
   } | null;
 }
 
@@ -122,6 +127,7 @@ export function AdminEventDetailClient({
   const [winner3, setWinner3] = useState('');
   const [harapan1, setHarapan1] = useState('');
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(async () => {
@@ -194,6 +200,35 @@ export function AdminEventDetailClient({
         message: (err as Error).message || 'Terjadi kesalahan.',
       });
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/events/${event.id}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Gagal menghapus event dari server');
+      }
+
+      toast({
+        type: 'success',
+        title: 'Event Dihapus',
+        message: 'Event berhasil dihapus secara permanen.',
+      });
+      router.push('/admin/events');
+    } catch (err) {
+      toast({
+        type: 'error',
+        title: 'Gagal Menghapus Event',
+        message: (err as Error).message || 'Terjadi kesalahan.',
+      });
       setLoading(false);
     }
   };
@@ -603,11 +638,36 @@ export function AdminEventDetailClient({
               </Button>
             )}
             {event.status === 'FINALIZED' && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-400 text-xs font-medium glow-gold">
-                <Trophy size={14} />
-                Kompetisi Telah Selesai
-              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled
+                leftIcon={<Award size={14} />}
+              >
+                Telah Difinalisasi
+              </Button>
             )}
+            
+            <Link href={`/admin/events/${event.id}/edit`}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white"
+                leftIcon={<Edit size={14} />}
+              >
+                Edit Event
+              </Button>
+            </Link>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              className="bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 hover:text-red-300"
+              leftIcon={<Trash2 size={14} />}
+              onClick={() => setIsDeleteConfirmOpen(true)}
+            >
+              Hapus
+            </Button>
           </div>
         </div>
 
@@ -767,10 +827,25 @@ export function AdminEventDetailClient({
                           <div className="text-[10px] text-slate-500 font-mono mt-0.5">
                             {reg.team_id ? `Ketua: ${reg.users?.full_name}` : reg.users?.email}
                           </div>
+                          {reg.team_id && reg.teams?.team_members && (
+                            <div className="mt-2 text-[10px] text-slate-400 space-y-1">
+                              <p className="font-semibold text-slate-300">Anggota ({reg.teams.team_members.filter(m => m.status === 'CONFIRMED').length}):</p>
+                              {reg.teams.team_members.map((member, idx) => (
+                                <div key={idx} className="flex items-center gap-1">
+                                  <span className={member.status === 'CONFIRMED' ? 'text-teal-400' : 'text-slate-500'}>
+                                    • {member.users?.full_name || member.users?.email || 'User'}
+                                  </span>
+                                  {member.status !== 'CONFIRMED' && (
+                                    <span className="text-[9px] text-amber-500">({member.status})</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-4 text-slate-300">{reg.users?.institution || '-'}</td>
                         <td className="px-5 py-4 text-slate-400">
-                          {reg.team_id ? '👥 Kelompok' : '👤 Individu'}
+                          {reg.team_id ? <><Users size={14} className="inline mr-1" /> Kelompok</> : <><User size={14} className="inline mr-1" /> Individu</>}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex flex-col gap-1">
@@ -1085,8 +1160,8 @@ export function AdminEventDetailClient({
                         </td>
                         <td className="px-5 py-4 text-center">
                           {entry.winner_rank ? (
-                            <span className="inline-block px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold glow-gold">
-                              🏆 {entry.winner_rank.replace('_', ' ')}
+                            <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-semibold glow-gold">
+                              <Trophy size={10} className="mr-1" /> {entry.winner_rank.replace('_', ' ')}
                             </span>
                           ) : (
                             <span className="text-slate-500 text-[10px]">-</span>
@@ -1262,6 +1337,18 @@ export function AdminEventDetailClient({
         message={`Apakah Anda yakin ingin memindahkan status event ke "${targetStatus}"? Tindakan ini akan merubah alur workflow pada sisi peserta dan juri.`}
         confirmLabel="Ya, Ubah Status"
         variant="primary"
+        loading={loading}
+      />
+
+      {/* Confirmation Modal - Delete */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteEvent}
+        title="Hapus Event"
+        message="Apakah Anda yakin ingin menghapus event ini? Semua data pendaftaran, karya, dan nilai akan terhapus permanen dan tidak dapat dikembalikan."
+        confirmLabel="Ya, Hapus"
+        cancelLabel="Batal"
         loading={loading}
       />
     </div>

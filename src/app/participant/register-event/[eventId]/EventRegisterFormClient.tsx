@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Send, Upload, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Upload, Plus, Trash2, User, Users, FileText } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -152,7 +152,7 @@ export function EventRegisterFormClient({
             .single();
 
           if (memberUserErr || !memberUser) {
-            throw new Error(`Anggota dengan email "${email}" tidak ditemukan. Pastikan mereka sudah memiliki akun di portal.`);
+            throw new Error(`Anggota dengan email "${email}" belum memiliki akun. Harap minta rekan Anda mendaftar akun terlebih dahulu di portal ini sebelum Anda mendaftarkan tim.`);
           }
 
           // Insert into team_members
@@ -222,7 +222,7 @@ export function EventRegisterFormClient({
           {event.registration_mode === 'TEAM' ? (
             <div className="space-y-4">
               <h2 className="text-sm font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
-                👥 Informasi Kelompok / Tim
+                <Users size={16} className="inline mr-1 mb-0.5" /> Informasi Kelompok / Tim
               </h2>
               <Input
                 label="Nama Tim"
@@ -283,7 +283,7 @@ export function EventRegisterFormClient({
           ) : (
             <div className="space-y-2">
               <h2 className="text-sm font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
-                👤 Informasi Pendaftaran Individual
+                <User size={16} className="inline mr-1 mb-0.5" /> Informasi Pendaftaran Individual
               </h2>
               <p className="text-xs text-slate-400">
                 Pendaftaran untuk event ini bersifat individual. Data diri Anda akan diambil otomatis dari profil akun Anda.
@@ -296,7 +296,7 @@ export function EventRegisterFormClient({
           {/* Documents Upload Section */}
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
-              📄 Bukti Administrasi / KTM
+              <FileText size={16} className="inline mr-1 mb-0.5" /> Bukti Administrasi / KTM
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed">
               Unggah berkas bukti mahasiswa aktif / Kartu Tanda Mahasiswa (KTM) dalam format PDF atau gambar (JPG/PNG). Ukuran file maksimal adalah 5 MB.

@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Trophy, AlertCircle, ChevronRight, Inbox, Check, X
+  Trophy, AlertCircle, ChevronRight, Inbox, Check, X, User
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -44,23 +44,11 @@ export function ParticipantDashboardClient({
 
       if (memberErr) throw memberErr;
 
-      // 2. Insert record in registrations table for this user & event
-      const { error: regErr } = await supabase
-        .from('registrations')
-        .insert({
-          event_id: invite.teams.event_id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          team_id: invite.team_id,
-          status: 'PENDING', // Will wait for admin approval
-        });
-
-      if (regErr) throw regErr;
-
       setInvitations(invitations.filter((inv) => inv.team_id !== invite.team_id));
       toast({
         type: 'success',
         title: 'Undangan Diterima',
-        message: `Anda sekarang bergabung dengan tim ${invite.teams.name}. Pendaftaran Anda menunggu verifikasi.`,
+        message: `Anda sekarang bergabung dengan tim ${invite.teams.name}. Pendaftaran tim sedang berjalan.`,
       });
       router.refresh();
     } catch (err: any) {
@@ -197,7 +185,7 @@ export function ParticipantDashboardClient({
                           {event?.title}
                         </h3>
                         <p className="text-[10px] text-slate-500">
-                          Mode: {reg.team_id ? `Kelompok (Tim: ${reg.teams?.name})` : '👤 Individu'}
+                          Mode: {reg.team_id ? `Kelompok (Tim: ${reg.teams?.name})` : <><User size={10} className="inline mr-1" /> Individu</>}
                         </p>
                       </div>
 

@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { EventStatus, RegistrationStatus, ScoreStatus, WinnerRank } from '@/types';
+import { Medal, Trophy } from 'lucide-react';
 
 type BadgeVariant =
   | 'pending'
@@ -122,18 +123,31 @@ export function ScoreStatusBadge({ status }: { status: ScoreStatus }) {
 }
 
 export function WinnerBadge({ rank }: { rank: WinnerRank }) {
-  const labels: Record<WinnerRank, string> = {
-    JUARA_1: '🥇 Juara 1',
-    JUARA_2: '🥈 Juara 2',
-    JUARA_3: '🥉 Juara 3',
-    HARAPAN_1: '🏅 Harapan 1',
-    HARAPAN_2: '🏅 Harapan 2',
-    HARAPAN_3: '🏅 Harapan 3',
+  const getIconAndLabel = (rank: WinnerRank) => {
+    switch (rank) {
+      case 'JUARA_1':
+        return { icon: <Trophy size={14} className="mr-1" />, label: 'Juara 1' };
+      case 'JUARA_2':
+        return { icon: <Medal size={14} className="mr-1" />, label: 'Juara 2' };
+      case 'JUARA_3':
+        return { icon: <Medal size={14} className="mr-1" />, label: 'Juara 3' };
+      case 'HARAPAN_1':
+        return { icon: <Medal size={14} className="mr-1" />, label: 'Harapan 1' };
+      case 'HARAPAN_2':
+        return { icon: <Medal size={14} className="mr-1" />, label: 'Harapan 2' };
+      case 'HARAPAN_3':
+        return { icon: <Medal size={14} className="mr-1" />, label: 'Harapan 3' };
+      default:
+        return { icon: null, label: '' };
+    }
   };
+
+  const { icon, label } = getIconAndLabel(rank);
 
   return (
     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold badge-finalized">
-      {labels[rank]}
+      {icon}
+      {label}
     </span>
   );
 }

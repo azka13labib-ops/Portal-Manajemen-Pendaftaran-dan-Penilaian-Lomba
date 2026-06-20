@@ -9,6 +9,7 @@ import {
   Calendar,
   Inbox,
   Sparkles,
+  FileText,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -97,7 +98,7 @@ export function CertificatesListClient({ certificates }: CertificatesListClientP
                           <WinnerBadge rank={cert.winner_rank} />
                         ) : (
                           <Badge variant="default" className="bg-blue-600/10 text-blue-300 border border-blue-500/20">
-                            📜 Partisipasi
+                            <FileText size={12} className="inline mr-1" /> Partisipasi
                           </Badge>
                         )}
                         <span className="text-[10px] text-slate-500 font-medium">

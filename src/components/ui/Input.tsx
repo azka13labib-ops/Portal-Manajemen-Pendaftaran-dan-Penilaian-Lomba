@@ -2,6 +2,7 @@
 
 import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
+import { AlertTriangle } from 'lucide-react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -36,7 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={cn(
-              'w-full h-10 rounded-[var(--radius-md)]',
+              'w-full h-10 rounded-md',
               'bg-[rgba(17,34,64,0.6)] border border-[rgba(93,138,205,0.2)]',
               'text-slate-100 placeholder:text-slate-500 text-sm',
               'px-3',
@@ -60,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
         {error && (
           <p className="text-xs text-red-400 flex items-center gap-1">
-            <span>⚠</span> {error}
+            <AlertTriangle size={12} /> {error}
           </p>
         )}
         {hint && !error && (
@@ -96,7 +97,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            'w-full min-h-[100px] rounded-[var(--radius-md)]',
+            'w-full min-h-[100px] rounded-md',
             'bg-[rgba(17,34,64,0.6)] border border-[rgba(93,138,205,0.2)]',
             'text-slate-100 placeholder:text-slate-500 text-sm',
             'px-3 py-2.5 resize-y',
@@ -109,7 +110,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           {...props}
         />
-        {error && <p className="text-xs text-red-400">⚠ {error}</p>}
+        {error && <p className="text-xs text-red-400 flex items-center gap-1"><AlertTriangle size={12} /> {error}</p>}
         {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
       </div>
     );
@@ -143,7 +144,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            'w-full h-10 rounded-[var(--radius-md)]',
+            'w-full h-10 rounded-md',
             'bg-[rgba(17,34,64,0.6)] border border-[rgba(93,138,205,0.2)]',
             'text-slate-100 text-sm',
             'px-3',
@@ -171,7 +172,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="text-xs text-red-400">⚠ {error}</p>}
+        {error && <p className="text-xs text-red-400 flex items-center gap-1"><AlertTriangle size={12} /> {error}</p>}
         {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
       </div>
     );

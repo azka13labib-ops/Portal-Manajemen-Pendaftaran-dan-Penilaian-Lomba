@@ -3,30 +3,27 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Check, Plus, Trash2, User } from 'lucide-react';
+import { Trophy, Clock, BookOpen, ChevronLeft, ChevronRight, Check, Plus, Trash2, User, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { useToast } from '@/components/ui/Toast';
 import { slugify } from '@/lib/utils';
+import { Event, ScoringCriteria } from '@/types';
 
 const STEPS = [
   { id: 1, label: 'Info Event', icon: Trophy },
   { id: 2, label: 'Waktu & Jadwal', icon: Clock },
   { id: 3, label: 'Rubrik Penilaian', icon: BookOpen },
-  { id: 4, label: 'Undang Juri', icon: Users },
 ];
 
-interface Criteria {
-  name: string;
-  description: string;
-  weight: number;
-  min_score: number;
-  max_score: number;
+interface EditEventClientProps {
+  event: Event;
+  criteria: ScoringCriteria[];
 }
 
-export default function NewEventPage() {
+export function EditEventClient({ event, criteria: initialCriteria }: EditEventClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
@@ -35,30 +32,40 @@ export default function NewEventPage() {
   const [loading, setLoading] = useState(false);
 
   // Step 1 - Info
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [regMode, setRegMode] = useState<'INDIVIDUAL' | 'TEAM'>('INDIVIDUAL');
-  const [teamMin, setTeamMin] = useState(2);
-  const [teamMax, setTeamMax] = useState(5);
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description || '');
+  const [category, setCategory] = useState(event.category || '');
+  const [regMode, setRegMode] = useState<'INDIVIDUAL' | 'TEAM'>(event.registration_mode);
+  const [teamMin, setTeamMin] = useState(event.team_min_members || 2);
+  const [teamMax, setTeamMax] = useState(event.team_max_members || 5);
 
   // Step 2 - Dates
-  const [regOpen, setRegOpen] = useState('');
-  const [regClose, setRegClose] = useState('');
-  const [subClose, setSubClose] = useState('');
-  const [announced, setAnnounced] = useState('');
+  // Date values need to be in YYYY-MM-DDThh:mm format for datetime-local input
+  const formatForInput = (dateString: string | null | undefined) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // adjust for local timezone offset if needed, but for simplicity we assume it's stored in UTC and we want to display it properly
+    // Actually, simple substring works if the timezone is correct, but safer to do:
+    const offset = date.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
+    return localISOTime;
+  };
+
+  const [regOpen, setRegOpen] = useState(formatForInput(event.registration_open_at));
+  const [regClose, setRegClose] = useState(formatForInput(event.registration_close_at));
+  const [subClose, setSubClose] = useState(formatForInput(event.submission_close_at));
+  const [announced, setAnnounced] = useState(formatForInput(event.announced_at));
 
   // Step 3 - Criteria
-  const [criteria, setCriteria] = useState<Criteria[]>([
-    { name: 'Kreativitas', description: '', weight: 30, min_score: 0, max_score: 100 },
-    { name: 'Teknis', description: '', weight: 40, min_score: 0, max_score: 100 },
-    { name: 'Presentasi', description: '', weight: 30, min_score: 0, max_score: 100 },
-  ]);
+  const [criteria, setCriteria] = useState<Partial<ScoringCriteria>[]>(
+    initialCriteria.length > 0 ? initialCriteria : [
+      { name: 'Kreativitas', description: '', weight: 30, min_score: 0, max_score: 100 },
+      { name: 'Teknis', description: '', weight: 40, min_score: 0, max_score: 100 },
+      { name: 'Presentasi', description: '', weight: 30, min_score: 0, max_score: 100 },
+    ]
+  );
 
-  // Step 4 - Judges
-  const [judgeEmails, setJudgeEmails] = useState('');
-
-  const totalWeight = criteria.reduce((sum, c) => sum + Number(c.weight), 0);
+  const totalWeight = criteria.reduce((sum, c) => sum + Number(c.weight || 0), 0);
   const weightOk = Math.abs(totalWeight - 100) < 0.01;
 
   const canProceed = () => {
@@ -74,7 +81,7 @@ export default function NewEventPage() {
   const removeCriteria = (i: number) =>
     setCriteria(criteria.filter((_, idx) => idx !== i));
 
-  const updateCriteria = (i: number, field: keyof Criteria, value: string | number) =>
+  const updateCriteria = (i: number, field: keyof ScoringCriteria, value: string | number) =>
     setCriteria(criteria.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)));
 
   const handleSubmit = async () => {
@@ -82,14 +89,10 @@ export default function NewEventPage() {
     setLoading(true);
 
     try {
-      // Get current user for ownership
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Sesi login tidak valid');
-
-      // 1. Create event
-      const { data: event, error: eventErr } = await supabase
+      // 1. Update event
+      const { error: eventErr } = await supabase
         .from('events')
-        .insert({
+        .update({
           title: title.trim(),
           slug: slugify(title),
           description,
@@ -101,15 +104,21 @@ export default function NewEventPage() {
           registration_close_at: new Date(regClose).toISOString(),
           submission_close_at: new Date(subClose).toISOString(),
           announced_at: announced ? new Date(announced).toISOString() : null,
-          created_by: user.id,
-          status: 'DRAFT',
+          updated_at: new Date().toISOString()
         })
-        .select()
-        .single();
+        .eq('id', event.id);
 
       if (eventErr) throw eventErr;
 
-      // 2. Insert criteria
+      // 2. Update criteria
+      // Because criteria can be added/removed, it's easiest to delete existing and re-insert
+      const { error: delErr } = await supabase
+        .from('scoring_criteria')
+        .delete()
+        .eq('event_id', event.id);
+
+      if (delErr) throw delErr;
+
       if (criteria.length > 0) {
         await supabase.from('scoring_criteria').insert(
           criteria.map((c, i) => ({
@@ -124,52 +133,18 @@ export default function NewEventPage() {
         );
       }
 
-      // 3. Invite judges (email-based, best-effort)
-      const emails = judgeEmails
-        .split(/[,\n]/)
-        .map((e) => e.trim())
-        .filter(Boolean);
-
-      for (const email of emails) {
-        // Check if user exists
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', email)
-          .single();
-
-        if (existingUser) {
-          // Assign judge role & to event
-          const { data: judgeRole } = await supabase
-            .from('roles')
-            .select('id')
-            .eq('name', 'JUDGE')
-            .single();
-
-          if (judgeRole) {
-            await supabase
-              .from('user_roles')
-              .upsert({ user_id: existingUser.id, role_id: judgeRole.id });
-
-            await supabase
-              .from('event_judges')
-              .upsert({ event_id: event.id, judge_id: existingUser.id });
-          }
-        }
-        // Note: for new judges, admin should use the invite flow separately
-      }
-
-      toast({ type: 'success', title: 'Event berhasil dibuat!', message: 'Event disimpan sebagai Draft.' });
+      toast({ type: 'success', title: 'Event berhasil diperbarui!', message: 'Perubahan telah disimpan.' });
       router.push(`/admin/events/${event.id}`);
+      router.refresh();
     } catch (err: unknown) {
-      console.error('Error creating event:', err);
+      console.error('Error updating event:', err);
       let errMsg = 'Terjadi kesalahan. Coba lagi.';
       if (err instanceof Error) {
         errMsg = err.message;
       } else if (err && typeof err === 'object' && 'message' in err) {
         errMsg = String((err as { message: unknown }).message);
       }
-      toast({ type: 'error', title: 'Gagal membuat event', message: errMsg });
+      toast({ type: 'error', title: 'Gagal memperbarui event', message: errMsg });
     } finally {
       setLoading(false);
     }
@@ -180,9 +155,9 @@ export default function NewEventPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-bold text-slate-100" style={{ fontFamily: 'var(--font-display)' }}>
-          Buat Event Baru
+          Edit Event
         </h1>
-        <p className="text-sm text-slate-400 mt-0.5">Ikuti langkah-langkah berikut untuk membuat kompetisi baru.</p>
+        <p className="text-sm text-slate-400 mt-0.5">Ubah informasi kompetisi: {event.title}</p>
       </motion.div>
 
       {/* Steps Indicator */}
@@ -199,13 +174,11 @@ export default function NewEventPage() {
           return (
             <div key={s.id} className="flex items-center shrink-0">
               <button
-                onClick={() => done && setStep(s.id)}
+                onClick={() => setStep(s.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   active
                     ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                    : done
-                    ? 'text-teal-400 cursor-pointer'
-                    : 'text-slate-600'
+                    : 'text-slate-400 hover:text-slate-200 cursor-pointer'
                 }`}
               >
                 <div
@@ -402,7 +375,7 @@ export default function NewEventPage() {
                       </div>
                       <Textarea
                         placeholder="Deskripsi kriteria (opsional)..."
-                        value={c.description}
+                        value={c.description || ''}
                         onChange={(e) => updateCriteria(i, 'description', e.target.value)}
                         className="min-h-[60px]"
                       />
@@ -442,26 +415,6 @@ export default function NewEventPage() {
               </div>
             )}
 
-            {/* Step 4: Judges */}
-            {step === 4 && (
-              <div className="space-y-5">
-                <h2 className="font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
-                  Undang Juri (Opsional)
-                </h2>
-                <p className="text-sm text-slate-400">
-                  Masukkan email juri yang ingin diundang. Pisahkan dengan koma atau baris baru.
-                  Juri yang belum memiliki akun harus mendaftar terlebih dahulu.
-                </p>
-                <Textarea
-                  label="Email Juri"
-                  placeholder={"juri1@email.com\njuri2@email.com"}
-                  value={judgeEmails}
-                  onChange={(e) => setJudgeEmails(e.target.value)}
-                  className="min-h-[120px] font-mono text-xs"
-                  hint="Anda juga bisa menambahkan juri nanti dari halaman detail event."
-                />
-              </div>
-            )}
           </Card>
         </motion.div>
       </AnimatePresence>
@@ -477,7 +430,7 @@ export default function NewEventPage() {
           Kembali
         </Button>
 
-        {step < 4 ? (
+        {step < STEPS.length ? (
           <Button
             rightIcon={<ChevronRight size={16} />}
             onClick={() => setStep(step + 1)}
@@ -491,7 +444,7 @@ export default function NewEventPage() {
             loading={loading}
             leftIcon={<Check size={16} />}
           >
-            Simpan & Buat Event
+            Simpan Perubahan
           </Button>
         )}
       </div>

@@ -24,6 +24,7 @@ export function formatDateTime(dateStr: string | null): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZoneName: 'short',
   }).format(new Date(dateStr));
 }
 
@@ -107,18 +108,7 @@ export function getWinnerRankLabel(rank: WinnerRank | null | undefined): string 
   return labels[rank];
 }
 
-export function getWinnerRankEmoji(rank: WinnerRank | null | undefined): string {
-  if (!rank) return '';
-  const emojis: Record<WinnerRank, string> = {
-    JUARA_1: '🥇',
-    JUARA_2: '🥈',
-    JUARA_3: '🥉',
-    HARAPAN_1: '🏅',
-    HARAPAN_2: '🏅',
-    HARAPAN_3: '🏅',
-  };
-  return emojis[rank];
-}
+
 
 export function calculateWeightedScore(
   rawScore: number,

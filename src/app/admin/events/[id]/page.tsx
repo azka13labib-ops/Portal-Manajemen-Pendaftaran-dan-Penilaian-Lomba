@@ -31,7 +31,7 @@ export default async function AdminEventDetailPage({ params }: PageProps) {
     supabase.from('events').select('*').eq('id', eventId).single(),
     supabase
       .from('registrations')
-      .select('*, users(full_name, email, institution), teams(name)')
+      .select('*, users(full_name, email, institution), teams(name, team_members(status, users(full_name, email)))')
       .eq('event_id', eventId),
     supabase
       .from('scoring_criteria')
