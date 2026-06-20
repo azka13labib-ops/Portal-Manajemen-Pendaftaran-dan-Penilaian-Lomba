@@ -27,15 +27,17 @@ export default async function HomePage() {
   let profile = null;
 
   if (user) {
-    // Get role
-    const { data: roleData } = await supabase
+    // Get all roles
+    const { data: userRoles } = await supabase
       .from('user_roles')
       .select('roles(name)')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    userRole = (roleData as any)?.roles?.name || 'PARTICIPANT';
+    const roleNames = (userRoles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+    if (roleNames.includes('ADMIN')) userRole = 'ADMIN';
+    else if (roleNames.includes('JUDGE')) userRole = 'JUDGE';
+    else userRole = 'PARTICIPANT';
 
     // Get user profile
     const { data: profileData } = await supabase
