@@ -171,13 +171,13 @@ export function EventRegisterFormClient({
       // 3. Insert registration
       const { error: regErr } = await supabase
         .from('registrations')
-        .insert({
+        .upsert({
           event_id: event.id,
           user_id: userId,
           team_id: teamId,
           status: 'PENDING',
           docs_urls: uploadedDocs,
-        });
+        }, { onConflict: 'event_id,user_id' });
 
       if (regErr) throw regErr;
 

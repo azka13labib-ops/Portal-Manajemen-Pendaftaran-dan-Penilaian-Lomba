@@ -20,7 +20,6 @@ export default async function ParticipantRegistrationsPage() {
   const { data: registrations } = await supabase
     .from('registrations')
     .select('*, events(*), teams(*)')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   return <RegistrationsListClient registrations={registrations || []} />;

@@ -21,7 +21,6 @@ export default async function ParticipantSubmissionsPage() {
   const { data: registrations } = await supabase
     .from('registrations')
     .select('*, events(*), teams(*)')
-    .eq('user_id', user.id)
     .eq('status', 'APPROVED')
     .order('created_at', { ascending: false });
 

@@ -16,11 +16,9 @@ export default async function ParticipantDashboardPage() {
 
   if (!user) redirect('/auth/login');
 
-  // Fetch participant's registrations
   const { data: registrations } = await supabase
     .from('registrations')
-    .select('*, events(*), teams(*)')
-    .eq('user_id', user.id);
+    .select('*, events(*), teams(*)');
 
   // Fetch team member invitations for this user
   const { data: invitations } = await supabase
