@@ -24,7 +24,15 @@ const CATEGORIES = [
 ];
 
 /** BUG #5: Generate a stable gradient + dot-grid placeholder from the event title */
-function EventBannerPlaceholder({ title }: { title: string }) {
+function EventBannerPlaceholder({ title, bannerUrl }: { title: string; bannerUrl?: string | null }) {
+  if (bannerUrl) {
+    return (
+      <div className="w-full h-32 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)]">
+        <img src={bannerUrl} alt={title} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   const initials = title
     .split(' ')
     .slice(0, 2)
@@ -75,7 +83,7 @@ export function LandingClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1628] text-[#F4EFE3] flex flex-col bg-mesh noise-overlay relative">
+    <div className="min-h-screen bg-[#0A1628] text-[#F4EFE3] flex flex-col bg-mesh noise-overlay relative overflow-x-hidden">
       {/* Background Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[rgba(22,51,94,0.35)] rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[rgba(15,37,71,0.40)] rounded-full blur-3xl pointer-events-none -z-10" />
@@ -227,7 +235,7 @@ export function LandingClient({
             return (
               <Card key={event.id} className="overflow-hidden flex flex-col group hover:border-[rgba(244,239,227,0.18)] transition-all" padding="none">
                 {/* BUG #5: Gradient placeholder with initials — no Trophy icon */}
-                <EventBannerPlaceholder title={event.title} />
+                <EventBannerPlaceholder title={event.title} bannerUrl={event.banner_url} />
 
                 {/* Category + Mode badges overlaid on banner top */}
                 <div className="absolute top-3 left-3 flex gap-1.5 pointer-events-none"
@@ -247,6 +255,11 @@ export function LandingClient({
                         ? <><Users size={9} />Tim</>
                         : <><User size={9} />Individu</>}
                     </span>
+                    {event.target_audience && event.target_audience.length > 0 && (
+                      <span className="bg-slate-800/60 border border-slate-700 text-slate-300 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+                        {event.target_audience.join(', ')}
+                      </span>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">

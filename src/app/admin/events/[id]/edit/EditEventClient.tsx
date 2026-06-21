@@ -38,6 +38,7 @@ export function EditEventClient({ event, criteria: initialCriteria }: EditEventC
   const [regMode, setRegMode] = useState<'INDIVIDUAL' | 'TEAM'>(event.registration_mode);
   const [teamMin, setTeamMin] = useState(event.team_min_members || 2);
   const [teamMax, setTeamMax] = useState(event.team_max_members || 5);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   // Step 2 - Dates
   // Date values need to be in YYYY-MM-DDThh:mm format for datetime-local input
@@ -89,6 +90,31 @@ export function EditEventClient({ event, criteria: initialCriteria }: EditEventC
     setLoading(true);
 
     try {
+      let banner_url = event.banner_url;
+
+      if (bannerFile) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const fileExt = bannerFile.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+          const filePath = `${user.id}/${fileName}`;
+          
+          const { error: uploadErr } = await supabase.storage
+            .from('event-banners')
+            .upload(filePath, bannerFile, { cacheControl: '3600', upsert: true });
+          
+          if (uploadErr) {
+            throw new Error(`Gagal mengunggah poster: ${uploadErr.message}`);
+          }
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('event-banners')
+            .getPublicUrl(filePath);
+            
+          banner_url = publicUrl;
+        }
+      }
+
       // 1. Update event
       const { error: eventErr } = await supabase
         .from('events')
@@ -97,6 +123,7 @@ export function EditEventClient({ event, criteria: initialCriteria }: EditEventC
           slug: slugify(title),
           description,
           category: category || null,
+          banner_url,
           registration_mode: regMode,
           team_min_members: regMode === 'TEAM' ? teamMin : 1,
           team_max_members: regMode === 'TEAM' ? teamMax : 1,
@@ -228,6 +255,37 @@ export function EditEventClient({ event, criteria: initialCriteria }: EditEventC
                   onChange={(e) => setDescription(e.target.value)}
                   className="min-h-[120px]"
                 />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-300">Poster / Banner Lomba</p>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-800/10 hover:bg-slate-800/30 hover:border-slate-500/40 transition-all overflow-hidden relative">
+                    {bannerFile ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+                        <img src={URL.createObjectURL(bannerFile)} alt="Preview" className="h-full w-full object-cover opacity-40" />
+                        <span className="absolute text-sm font-semibold text-white drop-shadow-md z-10">{bannerFile.name}</span>
+                      </div>
+                    ) : event.banner_url ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+                        <img src={event.banner_url} alt="Current Banner" className="h-full w-full object-cover opacity-40" />
+                        <span className="absolute text-xs font-semibold text-white drop-shadow-md z-10 bg-black/50 px-2 py-1 rounded">Klik untuk mengganti poster</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <p className="text-xs text-slate-400">Klik untuk memilih gambar poster</p>
+                        <p className="text-[10px] text-slate-500 mt-1">JPG, PNG (Rekomendasi rasio 16:9)</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setBannerFile(e.target.files[0]);
+                        }
+                      }}
+                      accept=".jpg,.jpeg,.png"
+                    />
+                  </label>
+                </div>
                 <Select
                   label="Kategori"
                   options={[

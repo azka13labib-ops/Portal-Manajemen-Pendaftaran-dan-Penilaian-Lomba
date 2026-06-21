@@ -68,6 +68,8 @@ export interface Event {
   announced_at: string | null;
   status: EventStatus;
   created_by: string | null;
+  target_audience: string[] | null;
+  required_identity_document: string | null;
   created_at: string;
   updated_at: string;
 }

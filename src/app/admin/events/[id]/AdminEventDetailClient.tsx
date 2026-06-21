@@ -734,6 +734,12 @@ export function AdminEventDetailClient({
         {activeTab === 'overview' && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
+              {event.banner_url && (
+                <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border border-slate-700/50 shadow-lg relative">
+                  <img src={event.banner_url} alt="Poster Lomba" className="w-full h-full object-cover" />
+                </div>
+              )}
+
               <Card className="p-5 space-y-4">
                 <h3 className="font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
                   Deskripsi Event
@@ -764,6 +770,27 @@ export function AdminEventDetailClient({
                     <p className="text-slate-500">Pengumuman Pemenang</p>
                     <p className="text-slate-200 text-sm">
                       {event.announced_at ? format(new Date(event.announced_at), 'dd MMMM yyyy, HH:mm', { locale: localeId }) + ' WIB' : 'Belum Dijadwalkan'}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-5 space-y-4">
+                <h3 className="font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
+                  Ketentuan Peserta & Dokumen
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium">
+                  <div className="p-3.5 rounded-xl border border-slate-700 bg-slate-800/20 space-y-1">
+                    <p className="text-slate-500">Target Peserta</p>
+                    <p className="text-slate-200 text-sm">
+                      {event.target_audience && event.target_audience.length > 0
+                        ? event.target_audience.join(', ')
+                        : 'Mahasiswa'}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-slate-700 bg-slate-800/20 space-y-1">
+                    <p className="text-slate-500">Persyaratan Dokumen Identitas</p>
+                    <p className="text-slate-200 text-sm">
+                      {event.required_identity_document || 'KTM'}
                     </p>
                   </div>
                 </div>

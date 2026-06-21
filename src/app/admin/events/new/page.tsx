@@ -41,6 +41,9 @@ export default function NewEventPage() {
   const [regMode, setRegMode] = useState<'INDIVIDUAL' | 'TEAM'>('INDIVIDUAL');
   const [teamMin, setTeamMin] = useState(2);
   const [teamMax, setTeamMax] = useState(5);
+  const [targetAudience, setTargetAudience] = useState<string[]>(['MAHASISWA']);
+  const [requiredIdentityDoc, setRequiredIdentityDoc] = useState('KTM');
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   // Step 2 - Dates
   const [regOpen, setRegOpen] = useState('');
@@ -86,6 +89,27 @@ export default function NewEventPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sesi login tidak valid');
 
+      let banner_url: string | null = null;
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const { error: uploadErr } = await supabase.storage
+          .from('event-banners')
+          .upload(filePath, bannerFile, { cacheControl: '3600', upsert: true });
+        
+        if (uploadErr) {
+          throw new Error(`Gagal mengunggah poster: ${uploadErr.message}`);
+        }
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('event-banners')
+          .getPublicUrl(filePath);
+          
+        banner_url = publicUrl;
+      }
+
       // 1. Create event
       const { data: event, error: eventErr } = await supabase
         .from('events')
@@ -94,6 +118,7 @@ export default function NewEventPage() {
           slug: slugify(title),
           description,
           category: category || null,
+          banner_url,
           registration_mode: regMode,
           team_min_members: regMode === 'TEAM' ? teamMin : 1,
           team_max_members: regMode === 'TEAM' ? teamMax : 1,
@@ -103,6 +128,8 @@ export default function NewEventPage() {
           announced_at: announced ? new Date(announced).toISOString() : null,
           created_by: user.id,
           status: 'DRAFT',
+          target_audience: targetAudience,
+          required_identity_document: requiredIdentityDoc,
         })
         .select()
         .single();
@@ -255,6 +282,33 @@ export default function NewEventPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   className="min-h-[120px]"
                 />
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-300">Poster / Banner Lomba</p>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-800/10 hover:bg-slate-800/30 hover:border-slate-500/40 transition-all overflow-hidden relative">
+                    {bannerFile ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
+                        <img src={URL.createObjectURL(bannerFile)} alt="Preview" className="h-full w-full object-cover opacity-40" />
+                        <span className="absolute text-sm font-semibold text-white drop-shadow-md z-10">{bannerFile.name}</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <p className="text-xs text-slate-400">Klik untuk memilih gambar poster</p>
+                        <p className="text-[10px] text-slate-500 mt-1">JPG, PNG (Maks. 5MB, Rekomendasi rasio 16:9)</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setBannerFile(e.target.files[0]);
+                        }
+                      }}
+                      accept=".jpg,.jpeg,.png"
+                    />
+                  </label>
+                </div>
                 <Select
                   label="Kategori"
                   options={[
@@ -306,6 +360,37 @@ export default function NewEventPage() {
                     />
                   </div>
                 )}
+
+                <div>
+                  <p className="text-sm font-medium text-slate-300 mb-2">Target Peserta</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['SD', 'SMP', 'SMA', 'MAHASISWA', 'UMUM'].map((aud) => (
+                      <label key={aud} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[rgba(93,138,205,0.2)] hover:border-[rgba(93,138,205,0.35)] cursor-pointer text-sm text-slate-300">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-600 bg-slate-800/50 text-blue-500 focus:ring-blue-500/30"
+                          checked={targetAudience.includes(aud)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setTargetAudience([...targetAudience, aud]);
+                            } else {
+                              setTargetAudience(targetAudience.filter((t) => t !== aud));
+                            }
+                          }}
+                        />
+                        {aud}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <Input
+                  label="Persyaratan Dokumen Identitas"
+                  placeholder="Contoh: Kartu Pelajar / KTM / NISN"
+                  value={requiredIdentityDoc}
+                  onChange={(e) => setRequiredIdentityDoc(e.target.value)}
+                  required
+                />
               </div>
             )}
 
@@ -315,6 +400,8 @@ export default function NewEventPage() {
                 <h2 className="font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
                   Pengaturan Waktu
                 </h2>
+
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Input
                     label="Pendaftaran Dibuka"

@@ -296,10 +296,10 @@ export function EventRegisterFormClient({
           {/* Documents Upload Section */}
           <div className="space-y-3">
             <h2 className="text-sm font-semibold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
-              <FileText size={16} className="inline mr-1 mb-0.5" /> Bukti Administrasi / KTM
+              <FileText size={16} className="inline mr-1 mb-0.5" /> Bukti Administrasi / {event.required_identity_document || 'Identitas'}
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Unggah berkas bukti mahasiswa aktif / Kartu Tanda Mahasiswa (KTM) dalam format PDF atau gambar (JPG/PNG). Ukuran file maksimal adalah 5 MB.
+              Unggah berkas bukti peserta aktif / {event.required_identity_document || 'Kartu Identitas'} dalam format PDF atau gambar (JPG/PNG). Ukuran file maksimal adalah 5 MB.
             </p>
 
             <div className="flex items-center justify-center w-full">

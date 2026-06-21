@@ -45,7 +45,15 @@ const urgencyTextClass: Record<string, string> = {
 // ─────────────────────────────────────────────
 // Shared EventBannerPlaceholder
 // ─────────────────────────────────────────────
-function EventBannerPlaceholder({ title }: { title: string }) {
+function EventBannerPlaceholder({ title, bannerUrl }: { title: string; bannerUrl?: string | null }) {
+  if (bannerUrl) {
+    return (
+      <div className="w-full h-24 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)] rounded-t-2xl">
+        <img src={bannerUrl} alt={title} className="w-full h-full object-cover" />
+      </div>
+    );
+  }
+
   const initials = title
     .split(' ')
     .slice(0, 2)
@@ -82,7 +90,7 @@ function SubmissionCard({ item }: { item: any }) {
 
   return (
     <Card className="overflow-hidden flex flex-col group hover:border-[rgba(244,239,227,0.18)] transition-all bg-[rgba(15,37,71,0.55)]" padding="none">
-      <EventBannerPlaceholder title={event.title ?? 'Lomba'} />
+      <EventBannerPlaceholder title={event.title ?? 'Lomba'} bannerUrl={event.banner_url} />
 
       <div className="p-4 sm:p-5 flex-1 flex flex-col space-y-4">
         {/* Badges */}
