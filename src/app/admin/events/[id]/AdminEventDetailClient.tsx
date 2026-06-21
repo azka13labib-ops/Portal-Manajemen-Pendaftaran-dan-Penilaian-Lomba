@@ -236,6 +236,34 @@ export function AdminEventDetailClient({
   // Handle Registration Verification
   const handleVerifyRegistration = async (status: 'APPROVED' | 'REJECTED') => {
     if (!selectedReg) return;
+    
+    // Team Size Validation Check
+    if (status === 'APPROVED' && event.registration_mode === 'TEAM' && selectedReg.team_id) {
+      setLoading(true);
+      try {
+        const { count, error: countErr } = await supabase
+          .from('team_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('team_id', selectedReg.team_id)
+          .eq('status', 'CONFIRMED');
+
+        if (countErr) throw countErr;
+
+        const totalMembers = (count || 0) + 1; // +1 for the leader
+        
+        if (event.team_min_members && totalMembers < event.team_min_members) {
+          const proceed = window.confirm(`Peringatan: Tim ini baru memiliki ${totalMembers} anggota yang terkonfirmasi (termasuk ketua). Syarat minimal event ini adalah ${event.team_min_members} anggota.\n\nApakah Anda yakin ingin TETAP MELOLOSKAN (Approve) tim ini?`);
+          if (!proceed) {
+            setLoading(false);
+            return; // Cancel approval
+          }
+        }
+      } catch (err) {
+        console.error("Gagal memvalidasi jumlah anggota:", err);
+      }
+      setLoading(false);
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase

@@ -23,6 +23,34 @@ const CATEGORIES = [
   { value: 'inovasi', label: 'Inovasi', icon: <Rocket size={14} className="inline mr-1" /> },
 ];
 
+/** BUG #5: Generate a stable gradient + dot-grid placeholder from the event title */
+function EventBannerPlaceholder({ title }: { title: string }) {
+  const initials = title
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
+
+  return (
+    <div className="w-full h-32 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)]"
+      style={{ background: 'linear-gradient(135deg, #0F2547 0%, #16335E 100%)' }}
+    >
+      {/* Dot-grid texture */}
+      <div className="absolute inset-0 bg-dot-grid" />
+      {/* Large subtle initial letter(s) — top-right decorative */}
+      <span
+        className="absolute bottom-2 right-3 text-5xl font-extrabold leading-none select-none pointer-events-none"
+        style={{
+          color: 'rgba(244,239,227,0.07)',
+          fontFamily: 'var(--font-display)',
+        }}
+      >
+        {initials}
+      </span>
+    </div>
+  );
+}
+
 export function LandingClient({
   events,
   isLoggedIn,
@@ -34,7 +62,7 @@ export function LandingClient({
 
   // Filter events
   const filteredEvents = events.filter((e) => {
-    const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase()) ||
                           (e.description && e.description.toLowerCase().includes(search.toLowerCase()));
     const matchesCat = !selectedCat || e.category === selectedCat;
     return matchesSearch && matchesCat;
@@ -47,18 +75,18 @@ export function LandingClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#050d1a] text-slate-100 flex flex-col bg-mesh noise-overlay relative">
+    <div className="min-h-screen bg-[#0A1628] text-[#F4EFE3] flex flex-col bg-mesh noise-overlay relative">
       {/* Background Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-teal-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[rgba(22,51,94,0.35)] rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[rgba(15,37,71,0.40)] rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Navbar */}
-      <nav className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between border-b border-[rgba(93,138,205,0.1)]">
+      <nav className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between border-b border-[rgba(244,239,227,0.07)]">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center glow-blue text-white font-bold">
+          <div className="w-9 h-9 rounded-xl bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center text-[#F4EFE3] font-bold">
             <Trophy size={18} />
           </div>
-          <span className="font-bold text-slate-100 text-base" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="font-bold text-[#F4EFE3] text-base" style={{ fontFamily: 'var(--font-display)' }}>
             Portal Lomba
           </span>
         </Link>
@@ -66,11 +94,11 @@ export function LandingClient({
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <div className="flex items-center gap-4">
-              <span className="hidden sm:inline text-xs text-slate-400 font-medium">
-                Halo, <span className="text-slate-200 font-semibold">{userName || 'Pengguna'}</span>
+              <span className="hidden sm:inline text-xs text-[#9CA8BD] font-medium">
+                Halo, <span className="text-[#F4EFE3] font-semibold">{userName || 'Pengguna'}</span>
               </span>
               <Link href={getDashboardHref()}>
-                <Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />} className="glow-blue">
+                <Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />}>
                   Dashboard
                 </Button>
               </Link>
@@ -83,7 +111,7 @@ export function LandingClient({
                 </Button>
               </Link>
               <Link href="/auth/register">
-                <Button variant="primary" size="sm" className="glow-blue">
+                <Button variant="primary" size="sm">
                   Daftar Akun
                 </Button>
               </Link>
@@ -98,7 +126,7 @@ export function LandingClient({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-[10px] font-bold text-blue-400 uppercase tracking-widest"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[rgba(244,239,227,0.15)] bg-[rgba(244,239,227,0.05)] text-[10px] font-bold text-[#F4EFE3] uppercase tracking-widest"
         >
           <Sparkles size={11} className="animate-pulse" /> Platform Kompetisi Terpusat
         </motion.div>
@@ -118,9 +146,9 @@ export function LandingClient({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="max-w-xl mx-auto text-xs sm:text-sm text-slate-400 leading-relaxed"
+          className="max-w-xl mx-auto text-xs sm:text-sm text-[#9CA8BD] leading-relaxed"
         >
-          Portal Lomba menyajikan kemudahan pendaftaran, kejelasan pengunggahan karya, 
+          Portal Lomba menyajikan kemudahan pendaftaran, kejelasan pengunggahan karya,
           penilaian transparan oleh juri profesional, serta integrasi e-sertifikat instan.
         </motion.p>
 
@@ -132,13 +160,13 @@ export function LandingClient({
         >
           {isLoggedIn ? (
             <Link href={getDashboardHref()}>
-              <Button variant="primary" size="lg" className="glow-blue" rightIcon={<ArrowRight size={16} />}>
+              <Button variant="primary" size="lg" rightIcon={<ArrowRight size={16} />}>
                 Mulai Kompetisi
               </Button>
             </Link>
           ) : (
             <Link href="/auth/register">
-              <Button variant="primary" size="lg" className="glow-blue" rightIcon={<ArrowRight size={16} />}>
+              <Button variant="primary" size="lg" rightIcon={<ArrowRight size={16} />}>
                 Daftar Sekarang
               </Button>
             </Link>
@@ -153,12 +181,12 @@ export function LandingClient({
 
       {/* Main Browse Section */}
       <section id="events-section" className="w-full max-w-7xl mx-auto px-6 py-12 flex-1 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[rgba(244,239,227,0.07)] pb-6">
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-200" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-lg font-bold text-[#F4EFE3]" style={{ fontFamily: 'var(--font-display)' }}>
               Daftar Kompetisi Aktif
             </h2>
-            <p className="text-xs text-slate-500">Pilih kompetisi sesuai minat Anda dan mulailah berprestasi.</p>
+            <p className="text-xs text-[#9CA8BD]">Pilih kompetisi sesuai minat Anda dan mulailah berprestasi.</p>
           </div>
 
           {/* Search & Filter */}
@@ -169,24 +197,24 @@ export function LandingClient({
                 placeholder="Cari nama kompetisi..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 rounded-xl bg-slate-800/40 border border-slate-800 text-xs px-3 pl-9 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full h-9 rounded-xl bg-[rgba(15,37,71,0.60)] border border-[rgba(244,239,227,0.10)] text-xs px-3 pl-9 text-[#F4EFE3] placeholder:text-[#6B7A9A] focus:outline-none focus:border-[rgba(244,239,227,0.25)] transition-colors"
               />
-              <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
+              <Search size={14} className="absolute left-3 top-2.5 text-[#6B7A9A]" />
             </div>
 
             <div className="relative">
               <select
                 value={selectedCat}
                 onChange={(e) => setSelectedCat(e.target.value)}
-                className="h-9 rounded-xl bg-slate-800/40 border border-slate-800 text-xs px-3 pr-8 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+                className="h-9 rounded-xl bg-[rgba(15,37,71,0.60)] border border-[rgba(244,239,227,0.10)] text-xs px-3 pr-8 text-[#F4EFE3] focus:outline-none focus:border-[rgba(244,239,227,0.25)] transition-colors appearance-none cursor-pointer"
               >
                 {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value} className="bg-[#0a1628]">
+                  <option key={cat.value} value={cat.value} className="bg-[#0F2547]">
                     {cat.label}
                   </option>
                 ))}
               </select>
-              <Filter size={12} className="absolute right-3 top-3 text-slate-400 pointer-events-none" />
+              <Filter size={12} className="absolute right-3 top-3 text-[#9CA8BD] pointer-events-none" />
             </div>
           </div>
         </div>
@@ -195,41 +223,51 @@ export function LandingClient({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => {
             const isRegOpen = event.status === 'OPEN';
-            
-            return (
-              <Card key={event.id} className="overflow-hidden flex flex-col group hover:border-[rgba(93,138,205,0.3)] transition-all">
-                {/* Event banner visual representation (premium CSS styling) */}
-                <div className="w-full h-32 bg-linear-to-br from-blue-900/40 to-teal-900/30 relative flex items-center justify-center overflow-hidden border-b border-slate-800">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(37,99,235,0.1),transparent_70%)]" />
-                  <Trophy size={48} className="text-blue-500/20 group-hover:scale-110 transition-transform duration-300" />
-                  
-                  <span className="absolute top-3 left-3 text-[9px] font-bold text-teal-300 bg-teal-600/20 px-2 py-0.5 rounded border border-teal-500/20 uppercase tracking-wider">
-                    {event.category || 'Lomba'}
-                  </span>
 
-                  <span className="absolute top-3 right-3 text-[9px] font-bold text-blue-300 bg-blue-600/20 px-2 py-0.5 rounded border border-blue-500/20 flex items-center">
-                    {event.registration_mode === 'TEAM' ? <><Users size={10} className="mr-1" /> Tim</> : <><User size={10} className="mr-1" /> Individu</>}
-                  </span>
+            return (
+              <Card key={event.id} className="overflow-hidden flex flex-col group hover:border-[rgba(244,239,227,0.18)] transition-all" padding="none">
+                {/* BUG #5: Gradient placeholder with initials — no Trophy icon */}
+                <EventBannerPlaceholder title={event.title} />
+
+                {/* Category + Mode badges overlaid on banner top */}
+                <div className="absolute top-3 left-3 flex gap-1.5 pointer-events-none"
+                  style={{ position: 'relative', top: 'auto', left: 'auto' }}
+                >
                 </div>
 
                 {/* Event details */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-1.5">
-                    <h3 className="font-bold text-slate-100 text-sm line-clamp-1 group-hover:text-blue-400 transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
-                      {event.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                      {event.description || 'Tidak ada deskripsi singkat.'}
-                    </p>
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4 relative">
+                  {/* Badges row */}
+                  <div className="flex items-center gap-1.5 flex-wrap -mt-1">
+                    <span className="badge-category text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                      {event.category || 'Lomba'}
+                    </span>
+                    <span className="badge-category text-[9px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      {event.registration_mode === 'TEAM'
+                        ? <><Users size={9} />Tim</>
+                        : <><User size={9} />Individu</>}
+                    </span>
                   </div>
 
-                  <div className="space-y-3 pt-2">
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <div className="space-y-1.5">
+                    <h3 className="font-bold text-[#F4EFE3] text-sm line-clamp-1 group-hover:text-[#E8E0CC] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+                      {event.title}
+                    </h3>
+                    {/* BUG #3: only render description if it exists */}
+                    {event.description ? (
+                      <p className="text-[11px] text-[#9CA8BD] line-clamp-2 leading-relaxed">
+                        {event.description}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center gap-1.5 text-[10px] text-[#9CA8BD]">
                       <Calendar size={12} />
                       <span>Tutup Pendaftaran: {new Date(event.registration_close_at).toLocaleDateString('id-ID')}</span>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-800/40 pt-3">
+                    <div className="flex items-center justify-between border-t border-[rgba(244,239,227,0.07)] pt-3">
                       <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-semibold ${
                         event.status === 'OPEN' ? 'badge-open' : 'badge-draft'
                       }`}>
@@ -238,12 +276,12 @@ export function LandingClient({
 
                       {isRegOpen ? (
                         <Link href={isLoggedIn ? `/participant/register-event/${event.id}` : '/auth/login'}>
-                          <Button variant="primary" size="sm" rightIcon={<Zap size={10} />} className="glow-blue">
+                          <Button variant="primary" size="sm" rightIcon={<Zap size={10} />}>
                             Daftar Lomba
                           </Button>
                         </Link>
                       ) : (
-                        <span className="text-[10px] text-slate-500">Pendaftaran Ditutup</span>
+                        <span className="text-[10px] text-[#9CA8BD]">Pendaftaran Ditutup</span>
                       )}
                     </div>
                   </div>
@@ -253,7 +291,7 @@ export function LandingClient({
           })}
 
           {filteredEvents.length === 0 && (
-            <div className="col-span-full py-16 text-center text-slate-500 text-xs">
+            <div className="col-span-full py-16 text-center text-[#9CA8BD] text-xs">
               Tidak ada kompetisi aktif yang sesuai dengan kriteria pencarian.
             </div>
           )}
@@ -261,7 +299,7 @@ export function LandingClient({
       </section>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-800 py-6 text-center text-[10px] text-slate-500 mt-auto">
+      <footer className="w-full border-t border-[rgba(244,239,227,0.07)] py-6 text-center text-[10px] text-[#6B7A9A] mt-auto">
         &copy; {new Date().getFullYear()} Portal Lomba. Hak Cipta Dilindungi.
       </footer>
     </div>

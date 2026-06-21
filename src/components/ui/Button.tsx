@@ -15,33 +15,36 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
+  // PRIMARY: cream background, navy text — the CTA color
   primary: [
-    'bg-blue-600 hover:bg-blue-500 active:bg-blue-700',
-    'text-white',
-    'border border-blue-500/50 hover:border-blue-400',
-    'shadow-[0_0_16px_rgba(37,99,235,0.3)] hover:shadow-[0_0_24px_rgba(37,99,235,0.5)]',
+    'bg-[#F4EFE3] hover:bg-[#E8E0CC] active:bg-[#DDD6C3]',
+    'text-[#0A1628] font-semibold',
+    'border border-[rgba(244,239,227,0.4)]',
+    'shadow-[0_2px_12px_rgba(244,239,227,0.08)] hover:shadow-[0_4px_20px_rgba(244,239,227,0.15)]',
   ].join(' '),
+  // SECONDARY: cream outline, transparent background
   secondary: [
-    'bg-[rgba(17,34,64,0.8)] hover:bg-[rgba(26,51,88,0.9)]',
-    'text-slate-200 hover:text-white',
-    'border border-[rgba(93,138,205,0.2)] hover:border-[rgba(93,138,205,0.4)]',
+    'bg-transparent hover:bg-[rgba(244,239,227,0.06)]',
+    'text-[#F4EFE3] hover:text-[#F4EFE3]',
+    'border border-[rgba(244,239,227,0.20)] hover:border-[rgba(244,239,227,0.35)]',
   ].join(' '),
+  // GHOST: fully transparent, subtle hover
   ghost: [
-    'bg-transparent hover:bg-[rgba(255,255,255,0.05)]',
-    'text-slate-400 hover:text-slate-200',
-    'border border-transparent hover:border-[rgba(93,138,205,0.2)]',
+    'bg-transparent hover:bg-[rgba(244,239,227,0.05)]',
+    'text-[#9CA8BD] hover:text-[#F4EFE3]',
+    'border border-transparent hover:border-[rgba(244,239,227,0.12)]',
   ].join(' '),
+  // DANGER: for destructive actions
   danger: [
-    'bg-red-600/90 hover:bg-red-500 active:bg-red-700',
-    'text-white',
-    'border border-red-500/50',
-    'shadow-[0_0_16px_rgba(239,68,68,0.2)] hover:shadow-[0_0_24px_rgba(239,68,68,0.4)]',
+    'bg-[rgba(217,140,140,0.15)] hover:bg-[rgba(217,140,140,0.25)] active:bg-[rgba(217,140,140,0.30)]',
+    'text-[#D98C8C]',
+    'border border-[rgba(217,140,140,0.30)]',
   ].join(' '),
+  // GOLD: for winner/achievement highlights
   gold: [
-    'bg-amber-500 hover:bg-amber-400 active:bg-amber-600',
-    'text-[#0a1628] font-semibold',
-    'border border-amber-400/50',
-    'shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:shadow-[0_0_24px_rgba(245,158,11,0.5)]',
+    'bg-[rgba(216,178,107,0.15)] hover:bg-[rgba(216,178,107,0.25)]',
+    'text-[#D8B26B] font-semibold',
+    'border border-[rgba(216,178,107,0.30)]',
   ].join(' '),
 };
 
@@ -72,10 +75,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         className={cn(
           'inline-flex items-center justify-center',
-          'rounded-[var(--radius-md)] font-medium',
+          'rounded-md font-medium',
           'transition-all duration-150 ease-out',
-          'focus-visible:outline-2 focus-visible:outline-blue-400 focus-visible:outline-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
+          'focus-visible:outline-2 focus-visible:outline-[#F4EFE3] focus-visible:outline-offset-2',
+          'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
           'cursor-pointer select-none',
           variantStyles[variant],
           sizeStyles[size],

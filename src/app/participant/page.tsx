@@ -16,32 +16,46 @@ export default async function ParticipantDashboardPage() {
 
   if (!user) redirect('/auth/login');
 
+  // Registrations for this user
   const { data: registrations } = await supabase
     .from('registrations')
-    .select('*, events(*), teams(*)');
+    .select('*, events(*), teams(*)')
+    .order('created_at', { ascending: false });
 
-  // Fetch team member invitations for this user
+  // Team invitations
   const { data: invitations } = await supabase
     .from('team_members')
     .select('*, teams(*, events(*))')
     .eq('user_id', user.id)
     .eq('status', 'INVITED');
 
-  // Fetch all open events
-  const { data: openEvents } = await supabase
-    .from('events')
-    .select('*')
-    .eq('status', 'OPEN');
+  // Submission count (for stat card)
+  const approvedRegIds = (registrations || [])
+    .filter((r) => r.status === 'APPROVED')
+    .map((r) => r.id);
 
-  // Filter out open events that the user is already registered in
-  const registeredEventIds = new Set((registrations || []).map((r) => r.event_id));
-  const availableEvents = (openEvents || []).filter((e) => !registeredEventIds.has(e.id));
+  let submissionCount = 0;
+  if (approvedRegIds.length > 0) {
+    const { count } = await supabase
+      .from('submissions')
+      .select('id', { count: 'exact', head: true })
+      .in('registration_id', approvedRegIds);
+    submissionCount = count ?? 0;
+  }
+
+  // Certificate count (for stat card)
+  const { count: certificateCount } = await supabase
+    .from('certificates')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
 
   return (
     <ParticipantDashboardClient
       registrations={registrations || []}
       invitations={invitations || []}
-      availableEvents={availableEvents}
+      availableEvents={[]}
+      submissionCount={submissionCount}
+      certificateCount={certificateCount ?? 0}
     />
   );
 }

@@ -60,11 +60,83 @@ const roleLabels: Record<UserRole, string> = {
   PARTICIPANT: 'Peserta',
 };
 
+// Paths that require EXACT match only (no prefix matching)
+const exactMatchPaths = new Set(['/admin', '/judge', '/participant', '/']);
+
+function isNavItemActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  if (exactMatchPaths.has(href)) return false;
+  return pathname.startsWith(href);
+}
+
 const roleBadgeColors: Record<UserRole, string> = {
-  ADMIN: 'bg-blue-600/20 text-blue-300 border-blue-500/30',
-  JUDGE: 'bg-amber-600/20 text-amber-300 border-amber-500/30',
-  PARTICIPANT: 'bg-teal-600/20 text-teal-300 border-teal-500/30',
+  ADMIN: 'bg-[rgba(244,239,227,0.08)] text-[#F4EFE3] border-[rgba(244,239,227,0.15)]',
+  JUDGE: 'bg-[rgba(216,178,107,0.10)] text-[#D8B26B] border-[rgba(216,178,107,0.20)]',
+  PARTICIPANT: 'bg-[rgba(244,239,227,0.08)] text-[#9CA8BD] border-[rgba(244,239,227,0.12)]',
 };
+
+/** Single consistent NavItem — Gaya 1:
+ *  Active: bg-navy-600 (#1F4373) + cream text + cream left-bar 3px
+ *  Inactive: muted text + subtle hover
+ */
+function NavItem({
+  item,
+  isActive,
+  collapsed,
+  mobile,
+  onClose,
+}: {
+  item: { label: string; href: string; icon: React.ComponentType<{ size?: number; className?: string }> };
+  isActive: boolean;
+  collapsed: boolean;
+  mobile: boolean;
+  onClose?: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onClose}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2.5 rounded-xl',
+        'text-sm font-medium transition-all duration-150',
+        'group relative overflow-hidden',
+        !mobile && collapsed && 'justify-center px-0 w-10 mx-auto',
+        isActive
+          ? 'bg-[#1F4373] text-[#F4EFE3]'
+          : 'text-[#9CA8BD] hover:text-[#F4EFE3] hover:bg-[rgba(244,239,227,0.04)]'
+      )}
+    >
+      {/* Active indicator — 3px cream left bar, always Gaya 1 */}
+      {isActive && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full bg-[#F4EFE3]"
+          style={{ width: 3, height: 20 }}
+        />
+      )}
+      <Icon
+        size={18}
+        className={cn(
+          'relative z-10 shrink-0',
+          isActive ? 'text-[#F4EFE3]' : 'text-[#6B7A9A] group-hover:text-[#9CA8BD]'
+        )}
+      />
+      <AnimatePresence>
+        {(mobile || !collapsed) && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="relative z-10 whitespace-nowrap"
+          >
+            {item.label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </Link>
+  );
+}
 
 export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -78,12 +150,12 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
       <div
         className={cn(
           'flex items-center gap-3 px-4 py-5',
-          'border-b border-[rgba(93,138,205,0.12)]',
+          'border-b border-[rgba(244,239,227,0.07)]',
           !mobile && collapsed && 'justify-center px-0'
         )}
       >
-        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 shadow-[0_0_16px_rgba(37,99,235,0.4)]">
-          <Trophy size={18} className="text-white" />
+        <div className="w-9 h-9 rounded-xl bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center shrink-0">
+          <Trophy size={18} className="text-[#F4EFE3]" />
         </div>
         <AnimatePresence>
           {(mobile || !collapsed) && (
@@ -94,7 +166,7 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <span className="text-sm font-bold text-slate-100 whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
+              <span className="text-sm font-bold text-[#F4EFE3] whitespace-nowrap" style={{ fontFamily: 'var(--font-display)' }}>
                 Portal Lomba
               </span>
             </motion.div>
@@ -115,77 +187,32 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
               {roleLabels[role]}
             </span>
           ) : (
-            <div className={cn('w-2 h-2 rounded-full bg-current', roleBadgeColors[role].split(' ')[1])} />
+            <div className="w-2 h-2 rounded-full bg-[rgba(244,239,227,0.40)]" />
           )}
         </AnimatePresence>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — uses single NavItem component, identical for every page */}
       <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/admin' &&
-              item.href !== '/judge' &&
-              item.href !== '/participant' &&
-              pathname.startsWith(item.href));
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => mobile && setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                'text-sm font-medium transition-all duration-150',
-                'group relative',
-                !mobile && collapsed && 'justify-center px-0 w-10 mx-auto',
-                isActive
-                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-              )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId={`nav-indicator-${role}`}
-                  className="absolute inset-0 rounded-xl bg-blue-600/10"
-                  transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
-                />
-              )}
-              <Icon
-                size={18}
-                className={cn(
-                  'relative z-10 shrink-0',
-                  isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'
-                )}
-              />
-              <AnimatePresence>
-                {(mobile || !collapsed) && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="relative z-10 whitespace-nowrap"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          );
-        })}
+        {items.map((item) => (
+          <NavItem
+            key={item.href}
+            item={item}
+            isActive={isNavItemActive(pathname, item.href)}
+            collapsed={collapsed}
+            mobile={mobile}
+            onClose={mobile ? () => setMobileOpen(false) : undefined}
+          />
+        ))}
       </nav>
 
       {/* User Section */}
-      <div className={cn('border-t border-[rgba(93,138,205,0.12)] p-3 space-y-1', !mobile && collapsed && 'px-1')}>
-        {/* Sign Out */}
+      <div className={cn('border-t border-[rgba(244,239,227,0.07)] p-3 space-y-1', !mobile && collapsed && 'px-1')}>
         <button
           onClick={onSignOut}
           className={cn(
             'flex items-center gap-3 w-full px-3 py-2.5 rounded-xl',
-            'text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/10',
+            'text-sm text-[#9CA8BD] hover:text-[#D98C8C] hover:bg-[rgba(217,140,140,0.06)]',
             'transition-all duration-150',
             !mobile && collapsed && 'justify-center px-0'
           )}
@@ -205,15 +232,14 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
           </AnimatePresence>
         </button>
 
-        {/* User Info */}
         {(mobile || !collapsed) && (
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-blue-700 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center text-xs font-bold text-[#F4EFE3] shrink-0">
               {userName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">{userName}</p>
-              <p className="text-[10px] text-slate-500 truncate">{userEmail}</p>
+              <p className="text-xs font-medium text-[#F4EFE3] truncate">{userName}</p>
+              <p className="text-[10px] text-[#6B7A9A] truncate">{userEmail}</p>
             </div>
           </div>
         )}
@@ -229,7 +255,7 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
         transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1.0] }}
         className={cn(
           'hidden lg:flex flex-col relative',
-          'bg-[rgba(10,22,40,0.95)] border-r border-[rgba(93,138,205,0.12)]',
+          'bg-[#0F2547] border-r border-[rgba(244,239,227,0.06)]',
           'h-screen sticky top-0 overflow-hidden shrink-0'
         )}
       >
@@ -241,9 +267,9 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
           className={cn(
             'absolute bottom-[120px] -right-3.5 z-10',
             'w-7 h-7 rounded-full',
-            'bg-[#112240] border border-[rgba(93,138,205,0.2)]',
+            'bg-[#16335E] border border-[rgba(244,239,227,0.12)]',
             'flex items-center justify-center',
-            'text-slate-400 hover:text-slate-200',
+            'text-[#9CA8BD] hover:text-[#F4EFE3]',
             'transition-colors shadow-md'
           )}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -253,18 +279,18 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
       </motion.aside>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 bg-[rgba(10,22,40,0.95)] border-b border-[rgba(93,138,205,0.12)] backdrop-blur-md">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 bg-[rgba(15,37,71,0.97)] border-b border-[rgba(244,239,227,0.07)] backdrop-blur-md">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
-            <Trophy size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-lg bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center">
+            <Trophy size={14} className="text-[#F4EFE3]" />
           </div>
-          <span className="text-sm font-bold text-slate-100" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="text-sm font-bold text-[#F4EFE3]" style={{ fontFamily: 'var(--font-display)' }}>
             Portal Lomba
           </span>
         </div>
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 text-slate-400 hover:text-slate-200"
+          className="p-2 text-[#9CA8BD] hover:text-[#F4EFE3]"
           aria-label="Open menu"
         >
           <Menu size={20} />
@@ -287,11 +313,11 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', bounce: 0.1, duration: 0.35 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-72 bg-[rgba(10,22,40,0.98)] border-r border-[rgba(93,138,205,0.15)]"
+              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-72 bg-[rgba(15,37,71,0.99)] border-r border-[rgba(244,239,227,0.07)]"
             >
               <button
                 onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-200"
+                className="absolute top-4 right-4 p-1.5 text-[#9CA8BD] hover:text-[#F4EFE3]"
               >
                 <X size={18} />
               </button>

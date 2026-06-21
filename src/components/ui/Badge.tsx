@@ -5,13 +5,21 @@ import { EventStatus, RegistrationStatus, ScoreStatus, WinnerRank } from '@/type
 import { Medal, Trophy } from 'lucide-react';
 
 type BadgeVariant =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'submitted'
-  | 'draft'
-  | 'finalized'
-  | 'open'
+  // Status variants — use semantic status tokens
+  | 'status-success'
+  | 'status-warning'
+  | 'status-danger'
+  // Legacy aliases (map to status tokens)
+  | 'pending'     // → warning
+  | 'approved'    // → success
+  | 'rejected'    // → danger
+  | 'submitted'   // → warning
+  | 'draft'       // → neutral
+  | 'finalized'   // → warning-gold
+  | 'open'        // → success
+  // Visual category variants — cream outline
+  | 'category'    // for event category tags
+  | 'mode'        // for individu/tim tags
   | 'default';
 
 interface BadgeProps {
@@ -23,14 +31,23 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  pending: 'badge-pending',
-  approved: 'badge-approved',
-  rejected: 'badge-rejected',
+  // Semantic status
+  'status-success': 'badge-approved',
+  'status-warning': 'badge-pending',
+  'status-danger':  'badge-rejected',
+  // Legacy aliases → map to status utilities
+  pending:   'badge-pending',
+  approved:  'badge-approved',
+  rejected:  'badge-rejected',
   submitted: 'badge-submitted',
-  draft: 'badge-draft',
+  draft:     'badge-draft',
   finalized: 'badge-finalized',
-  open: 'badge-open',
-  default: 'bg-slate-700/50 text-slate-300 border border-slate-600/30',
+  open:      'badge-open',
+  // Visual — cream outline for category/mode tags
+  category: 'badge-category',
+  mode:     'badge-category',
+  // Default neutral
+  default: 'badge-draft',
 };
 
 export function Badge({ children, variant = 'default', className, dot, pulse }: BadgeProps) {
@@ -57,7 +74,24 @@ export function Badge({ children, variant = 'default', className, dot, pulse }: 
   );
 }
 
-// Convenience wrappers
+// ---- Convenience wrappers ----
+
+export function CategoryBadge({ category }: { category: string }) {
+  return (
+    <Badge variant="category">
+      {category}
+    </Badge>
+  );
+}
+
+export function ModeBadge({ mode }: { mode: 'INDIVIDUAL' | 'TEAM' | string }) {
+  return (
+    <Badge variant="mode">
+      {mode === 'TEAM' ? 'Tim' : 'Individu'}
+    </Badge>
+  );
+}
+
 export function EventStatusBadge({ status }: { status: EventStatus }) {
   const labels: Record<EventStatus, string> = {
     DRAFT: 'Draft',
