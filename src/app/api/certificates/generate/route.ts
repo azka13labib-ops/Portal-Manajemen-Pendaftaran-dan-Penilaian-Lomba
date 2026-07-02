@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       const certType = isWinner ? 'WINNER' : 'PARTICIPATION';
       
       // Determine who gets the certificate (array of users)
-      let recipients: { user_id: string, full_name: string }[] = [];
+      const recipients: { user_id: string, full_name: string }[] = [];
       
       if (event.registration_mode === 'TEAM' && reg.team_id) {
         // Include the leader (who registered)
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
             if (member.user_id !== reg.user_id) {
               recipients.push({
                 user_id: member.user_id,
-                full_name: (member.users as any)?.full_name || 'Peserta',
+                full_name: (member.users as unknown as { full_name: string })?.full_name || 'Peserta',
               });
             }
           }

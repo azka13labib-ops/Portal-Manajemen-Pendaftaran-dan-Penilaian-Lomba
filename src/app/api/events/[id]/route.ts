@@ -50,8 +50,9 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: 'Event and associated files deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('API Error during event deletion:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
