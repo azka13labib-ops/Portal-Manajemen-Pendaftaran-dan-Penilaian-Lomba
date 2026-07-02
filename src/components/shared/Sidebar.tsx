@@ -20,9 +20,11 @@ import {
   FileText,
   Upload,
   Medal,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/types';
+import { SettingsModal } from './SettingsModal';
 
 interface SidebarProps {
   role: UserRole;
@@ -141,6 +143,7 @@ function NavItem({
 export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const pathname = usePathname();
   const items = navItems[role];
 
@@ -233,14 +236,23 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
         </button>
 
         {(mobile || !collapsed) && (
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center text-xs font-bold text-[#F4EFE3] shrink-0">
-              {userName.charAt(0).toUpperCase()}
+          <div className="flex items-center justify-between px-3 py-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[rgba(244,239,227,0.10)] border border-[rgba(244,239,227,0.15)] flex items-center justify-center text-xs font-bold text-[#F4EFE3] shrink-0">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-[#F4EFE3] truncate">{userName}</p>
+                <p className="text-[10px] text-[#6B7A9A] truncate">{userEmail}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-[#F4EFE3] truncate">{userName}</p>
-              <p className="text-[10px] text-[#6B7A9A] truncate">{userEmail}</p>
-            </div>
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="p-1.5 rounded-lg text-[#9CA8BD] hover:text-[#F4EFE3] hover:bg-[rgba(244,239,227,0.06)] transition-colors shrink-0 ml-2"
+              title="Pengaturan Akun"
+            >
+              <Settings size={16} />
+            </button>
           </div>
         )}
       </div>
@@ -326,6 +338,12 @@ export function Sidebar({ role, userName, userEmail, onSignOut }: SidebarProps) 
           </>
         )}
       </AnimatePresence>
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        currentName={userName} 
+        currentEmail={userEmail} 
+      />
     </>
   );
 }
