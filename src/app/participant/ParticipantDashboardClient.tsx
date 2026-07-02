@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   AlertCircle, Check, X, User, Users, Clock, Upload, ClipboardCheck, UserPlus
 } from 'lucide-react';
@@ -27,7 +28,7 @@ function EventBannerPlaceholder({ title, bannerUrl }: { title: string; bannerUrl
   if (bannerUrl) {
     return (
       <div className="w-full h-24 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)] rounded-t-2xl">
-        <img src={bannerUrl} alt={title} className="w-full h-full object-cover" />
+        <Image src={bannerUrl} alt={title} fill className="object-cover" />
       </div>
     );
   }

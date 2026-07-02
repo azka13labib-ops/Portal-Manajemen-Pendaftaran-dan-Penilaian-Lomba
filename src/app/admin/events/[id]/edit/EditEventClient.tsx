@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Clock, BookOpen, ChevronLeft, ChevronRight, Check, Plus, Trash2, User, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -260,12 +261,12 @@ export function EditEventClient({ event, criteria: initialCriteria }: EditEventC
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-800/10 hover:bg-slate-800/30 hover:border-slate-500/40 transition-all overflow-hidden relative">
                     {bannerFile ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
-                        <img src={URL.createObjectURL(bannerFile)} alt="Preview" className="h-full w-full object-cover opacity-40" />
+                        <Image src={URL.createObjectURL(bannerFile)} alt="Preview" fill className="object-cover opacity-40" unoptimized />
                         <span className="absolute text-sm font-semibold text-white drop-shadow-md z-10">{bannerFile.name}</span>
                       </div>
                     ) : event.banner_url ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
-                        <img src={event.banner_url} alt="Current Banner" className="h-full w-full object-cover opacity-40" />
+                        <Image src={event.banner_url} alt="Current Banner" fill className="object-cover opacity-40" />
                         <span className="absolute text-xs font-semibold text-white drop-shadow-md z-10 bg-black/50 px-2 py-1 rounded">Klik untuk mengganti poster</span>
                       </div>
                     ) : (

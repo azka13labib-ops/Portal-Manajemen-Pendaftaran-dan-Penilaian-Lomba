@@ -3,12 +3,47 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AdminEventDetailClient } from './AdminEventDetailClient';
 
-export const metadata: Metadata = {
-  title: 'Detail Event & Manajemen',
-};
-
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id: eventId } = await params;
+  const supabase = await createClient();
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('title, description, banner_url, category, registration_open_at, registration_close_at')
+    .eq('id', eventId)
+    .single();
+
+  if (!event) {
+    return { title: 'Event Tidak Ditemukan' };
+  }
+
+  const description = event.description
+    ? String(event.description).slice(0, 160)
+    : `Daftar sekarang untuk ${event.title}. Kompetisi ${event.category || 'bergengsi'} bersertifikat.`;
+
+  return {
+    title: event.title,
+    description,
+    alternates: {
+      canonical: `https://portallomba.vercel.app/events/${eventId}`,
+    },
+    openGraph: {
+      title: `${event.title} | Portal Lomba`,
+      description,
+      url: `https://portallomba.vercel.app/events/${eventId}`,
+      images: event.banner_url ? [{ url: event.banner_url, width: 1200, height: 630, alt: event.title }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${event.title} | Portal Lomba`,
+      description,
+      images: event.banner_url ? [event.banner_url] : [],
+    },
+  };
 }
 
 export default async function AdminEventDetailPage({ params }: PageProps) {

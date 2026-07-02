@@ -13,6 +13,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface RegistrationsListClientProps {
   registrations: any[];
@@ -34,7 +35,7 @@ function EventBannerPlaceholder({ title, bannerUrl }: { title: string; bannerUrl
   if (bannerUrl) {
     return (
       <div className="w-full h-24 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)] rounded-t-2xl">
-        <img src={bannerUrl} alt={title} className="w-full h-full object-cover" />
+        <Image src={bannerUrl} alt={title} fill className="object-cover" />
       </div>
     );
   }

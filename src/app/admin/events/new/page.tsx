@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Clock, Users, BookOpen, ChevronLeft, ChevronRight, Check, Plus, Trash2, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -288,7 +289,7 @@ export default function NewEventPage() {
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-800/10 hover:bg-slate-800/30 hover:border-slate-500/40 transition-all overflow-hidden relative">
                     {bannerFile ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80">
-                        <img src={URL.createObjectURL(bannerFile)} alt="Preview" className="h-full w-full object-cover opacity-40" />
+                        <Image src={URL.createObjectURL(bannerFile)} alt="Preview" fill className="object-cover opacity-40" unoptimized />
                         <span className="absolute text-sm font-semibold text-white drop-shadow-md z-10">{bannerFile.name}</span>
                       </div>
                     ) : (

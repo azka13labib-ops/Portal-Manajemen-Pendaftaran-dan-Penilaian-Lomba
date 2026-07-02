@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   Trophy, Users, FileText, ClipboardList, CheckCircle2,
@@ -736,7 +737,7 @@ export function AdminEventDetailClient({
             <div className="md:col-span-2 space-y-6">
               {event.banner_url && (
                 <div className="w-full h-48 md:h-64 rounded-xl overflow-hidden border border-slate-700/50 shadow-lg relative">
-                  <img src={event.banner_url} alt="Poster Lomba" className="w-full h-full object-cover" />
+                  <Image src={event.banner_url} alt="Poster Lomba" fill className="object-cover" />
                 </div>
               )}
 
