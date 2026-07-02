@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Trophy, Calendar, ArrowRight, Sparkles, Search, Filter, Zap, Palette, Code, PenTool, Rocket, User, Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -28,7 +29,7 @@ function EventBannerPlaceholder({ title, bannerUrl }: { title: string; bannerUrl
   if (bannerUrl) {
     return (
       <div className="w-full h-32 relative overflow-hidden border-b border-[rgba(244,239,227,0.07)]">
-        <img src={bannerUrl} alt={title} className="w-full h-full object-cover" />
+        <Image src={bannerUrl} alt={title} fill className="object-cover" />
       </div>
     );
   }
@@ -84,6 +85,39 @@ export function LandingClient({
 
   return (
     <div className="min-h-screen bg-[#0A1628] text-[#F4EFE3] flex flex-col bg-mesh noise-overlay relative overflow-x-hidden">
+      {/* JSON-LD Structured Data for Google */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Portal Lomba',
+            url: 'https://portallomba.vercel.app',
+            description: 'Platform terpusat untuk pendaftaran lomba, penilaian, dan sertifikat digital.',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: {
+                '@type': 'EntryPoint',
+                urlTemplate: 'https://portallomba.vercel.app/?q={search_term_string}',
+              },
+              'query-input': 'required name=search_term_string',
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Portal Lomba',
+            url: 'https://portallomba.vercel.app',
+            description: 'Platform kompetisi dan lomba nasional online bersertifikat.',
+          }),
+        }}
+      />
       {/* Background Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[rgba(22,51,94,0.35)] rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[rgba(15,37,71,0.40)] rounded-full blur-3xl pointer-events-none -z-10" />

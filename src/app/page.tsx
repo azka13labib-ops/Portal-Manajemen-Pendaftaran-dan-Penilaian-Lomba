@@ -3,9 +3,17 @@ import { createClient } from '@/lib/supabase/server';
 import { LandingClient } from './LandingClient';
 
 export const metadata: Metadata = {
-  title: 'Portal Lomba — Platform Manajemen Kompetisi Mahasiswa',
+  title: 'Portal Lomba — Daftar Lomba & Kompetisi Nasional Terbaru',
   description:
-    'Daftarkan diri atau tim Anda, submit karya terbaik, dan dapatkan sertifikat digital resmi tingkat nasional.',
+    'Temukan info lomba terbaru, gratis, dan bersertifikat. Daftar kompetisi esai, desain, coding, dan olimpiade tingkat nasional secara online. Dapatkan sertifikat digital resmi.',
+  alternates: {
+    canonical: 'https://portallomba.vercel.app',
+  },
+  openGraph: {
+    title: 'Portal Lomba — Daftar Lomba & Kompetisi Nasional Terbaru',
+    description: 'Temukan info lomba terbaru, gratis, dan bersertifikat. Daftar kompetisi nasional secara online.',
+    url: 'https://portallomba.vercel.app',
+  },
 };
 
 export default async function HomePage() {
